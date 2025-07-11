@@ -26,6 +26,12 @@ from . import mdp
 # Scene definition
 ##
 
+def flat_image(env, obs_manager, term_name, kwargs):
+    sensor_cfg = kwargs["sensor_cfg"]
+    data_type = kwargs.get("data_type")
+    img = mdp.image(env, obs_manager, term_name, sensor_cfg=sensor_cfg, data_type=data_type)
+    return img.view(img.shape[0], -1)
+
 from isaaclab.sensors import TiledCameraCfg
 @configclass
 class ObjectTableSceneCfg(InteractiveSceneCfg):
@@ -77,7 +83,7 @@ class CommandsCfg:
         asset_name="robot",
         body_name=MISSING,  # will be set by agent env cfg
         resampling_time_range=(5.0, 5.0),
-        debug_vis=True,
+        debug_vis=False,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
             pos_x=(0.4, 0.6), pos_y=(-0.25, 0.25), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
@@ -93,17 +99,15 @@ class ActionsCfg:
     gripper_action: mdp.BinaryJointPositionActionCfg = MISSING
 
 
+
 @configclass
 class ObservationsCfg:
     """Observation specifications for the MDP."""
-
+    
     @configclass
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
-        image = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
-        image1 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_ext1"), "data_type": "rgb"})
-        image2 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_ext2"), "data_type": "rgb"})
-        image3 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_bird"), "data_type": "rgb"})
+       
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
         object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
@@ -113,9 +117,24 @@ class ObservationsCfg:
         def __post_init__(self):
             self.enable_corruption = True
             self.concatenate_terms = False
+    
+    @configclass
+    class ImageCfg(ObsGroup):
+        """Observations for image group."""
+        image = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
+        image1 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
+        image2 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
+        image3 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
+        
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = False
+
+
 
     # observation groups
     policy: PolicyCfg = PolicyCfg()
+    image: ImageCfg = ImageCfg()
 
 
 @configclass
@@ -199,7 +218,7 @@ class LiftEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the lifting environment."""
 
     # Scene settings
-    scene: ObjectTableSceneCfg = ObjectTableSceneCfg(num_envs=4096, env_spacing=5)
+    scene: ObjectTableSceneCfg = ObjectTableSceneCfg(num_envs=4, env_spacing=5)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
