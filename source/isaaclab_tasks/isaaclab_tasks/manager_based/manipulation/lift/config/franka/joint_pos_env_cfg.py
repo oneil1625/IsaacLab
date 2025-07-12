@@ -94,7 +94,7 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
             prim_path="{ENV_REGEX_NS}/Object",
             init_state=RigidObjectCfg.InitialStateCfg(pos=[0.5, 0, 0.055], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
-                usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
+                usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/blue_block.usd",
                 scale=(0.8, 0.8, 0.8),
                 rigid_props=RigidBodyPropertiesCfg(
                     solver_position_iteration_count=16,
@@ -108,17 +108,23 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
         )
         
 
-        self.scene.cuboid = AssetBaseCfg(
-            prim_path="{ENV_REGEX_NS}/walls",
-            spawn=sim_utils.CuboidCfg(size=[5.0,5.0,5.0]),
-            init_state=AssetBaseCfg.InitialStateCfg(pos=[0.79755,0.59112,-0.05549])
+        self.scene.wall1 = AssetBaseCfg(
+            prim_path="{ENV_REGEX_NS}/wall1",
+            spawn=sim_utils.CuboidCfg(size=[5.0,0.1,5.0]),
+            init_state=AssetBaseCfg.InitialStateCfg(pos=[0.79755,-1.95479,-0.05549])
         )
 
-        self.scene.light = AssetBaseCfg(
+        self.scene.wall2 = AssetBaseCfg(
+            prim_path="{ENV_REGEX_NS}/wall2",
+            spawn=sim_utils.CuboidCfg(size=[0.1,5.0,5.0]),
+            init_state=AssetBaseCfg.InitialStateCfg(pos=[-1.71779,0.59112,-0.05549])
+        )
+
+        '''self.scene.light = AssetBaseCfg(
             prim_path="{ENV_REGEX_NS}/lights",
             init_state=AssetBaseCfg.InitialStateCfg(pos=[1.09699,0.49177,0.91408],rot=[0.70844,-0.01017,-0.01119,0.70561]),
             spawn=sim_utils.DiskLightCfg(intensity=60000)
-        )
+        )'''
 
         # Listens to the required transforms
         marker_cfg = FRAME_MARKER_CFG.copy()
