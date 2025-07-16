@@ -63,11 +63,17 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0, 0, -1.05]),
         spawn=GroundPlaneCfg(),
     )
-
+        # lights
+    light = AssetBaseCfg(
+        prim_path="/World/light",
+        spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=3000.0),
+    )
     # lights
-    light:AssetBaseCfg = MISSING
+    #light:AssetBaseCfg = MISSING
 
-    cuboid:AssetBaseCfg = MISSING
+    wall1:AssetBaseCfg = MISSING
+    wall2:AssetBaseCfg = MISSING
+
     
 
 ##
