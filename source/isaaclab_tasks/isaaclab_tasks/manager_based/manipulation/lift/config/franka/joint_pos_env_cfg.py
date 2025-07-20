@@ -61,9 +61,9 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
         update_period=0.1,
         height=480,
         width=640,
-        data_types=["rgb", "distance_to_image_plane"],
+        data_types=["rgb", "distance_to_image_plane","semantic_segmentation"],
         spawn=sim_utils.PinholeCameraCfg(
-            focal_length=18.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
+            focal_length=18.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 2.5)
         ),
         offset=CameraCfg.OffsetCfg(pos=(1.9359,-0.13245,0.27203), rot=(-0.49817,0.49817,0.50182,-0.50182), convention="ros"),
         )
@@ -72,7 +72,7 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
         update_period=0.1,
         height=480,
         width=640,
-        data_types=["rgb", "distance_to_image_plane"],
+        data_types=["rgb", "distance_to_image_plane","semantic_segmentation"],
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
         ),
@@ -95,7 +95,7 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
             init_state=RigidObjectCfg.InitialStateCfg(pos=[0.5, 0, 0.055], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
                 usd_path=f"usd_assets/object.usd",
-            
+                semantic_tags=[("class","object")],
                 scale=(0.8, 0.8, 0.8),
                 rigid_props=RigidBodyPropertiesCfg(
                     solver_position_iteration_count=16,
@@ -108,7 +108,7 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
             ),
         )
         
-
+        
         self.scene.wall1 = AssetBaseCfg(
             prim_path="{ENV_REGEX_NS}/wall1",
             spawn=sim_utils.CuboidCfg(size=[5.0,0.1,5.0]),
