@@ -46,17 +46,13 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
     ee_frame: FrameTransformerCfg = MISSING
     # target object: will be populated by agent env cfg
     object: RigidObjectCfg | DeformableObjectCfg = MISSING
+    # Table
+    table: AssetBaseCfg = MISSING
     camera: TiledCameraCfg = MISSING
     camera_ext1: TiledCameraCfg = MISSING
     camera_ext2: TiledCameraCfg = MISSING
     camera_bird: TiledCameraCfg = MISSING
-    # Table
-    table = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
-                         semantic_tags=[("class","table")]),
-    )
+    
 
     # plane
     plane = AssetBaseCfg(
