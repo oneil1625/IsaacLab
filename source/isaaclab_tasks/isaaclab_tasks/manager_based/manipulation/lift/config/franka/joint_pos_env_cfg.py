@@ -27,7 +27,14 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
-
+        MAPPING = {
+            "class:object": (255, 36, 66, 255),
+            "class:table": (255, 237, 218, 255),
+            "class:robot": (125, 125, 125, 255),
+            "class:UNLABELLED": (125, 125, 125, 255),
+            "class:BACKGROUND": (10, 10, 10, 255),
+        }
+        self.scene.table.spawn.semantic_tags = [("class", "table")]
         # Set Franka as robot
         self.scene.robot = FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
@@ -49,7 +56,7 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
         update_period=0.1,
         height=480,
         width=640,
-        data_types=["rgb", "distance_to_image_plane"],
+        data_types=["rgb", "distance_to_image_plane","semantic_segmentation"],
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
         ),
@@ -83,7 +90,7 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
         update_period=0.1,
         height=480,
         width=640,
-        data_types=["rgb", "distance_to_image_plane"],
+        data_types=["rgb", "distance_to_image_plane","semantic_segmentation"],
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
         ),
