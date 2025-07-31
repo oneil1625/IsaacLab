@@ -115,7 +115,14 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
             ),
         )
         
-        
+        self.scene.table = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/Table",
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
+        spawn=UsdFileCfg(
+            usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
+            semantic_tags=[("class","table")],
+            ),
+        )
         self.scene.wall1 = AssetBaseCfg(
             prim_path="{ENV_REGEX_NS}/wall1",
             spawn=sim_utils.CuboidCfg(size=[5.0,0.1,5.0]),
@@ -127,6 +134,8 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
             spawn=sim_utils.CuboidCfg(size=[0.1,5.0,5.0]),
             init_state=AssetBaseCfg.InitialStateCfg(pos=[-1.71779,0.59112,-0.05549])
         )
+
+        
 
         '''self.scene.light = AssetBaseCfg(
             prim_path="{ENV_REGEX_NS}/lights",
