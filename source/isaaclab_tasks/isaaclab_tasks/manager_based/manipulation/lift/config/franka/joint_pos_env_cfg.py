@@ -45,57 +45,62 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
         self.commands.object_pose.body_name = "panda_hand"
 
         self.scene.camera = TiledCameraCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/panda_hand/front_cam",
-        update_period=0.1,
-        height=480,
-        width=640,
-        data_types=["rgb", "distance_to_image_plane"],
-        spawn=sim_utils.PinholeCameraCfg(
-            focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
-        ),
-        offset=CameraCfg.OffsetCfg(pos=(0, 0.0, 0), rot=(1, 0, 0, 0), convention="ros"),
+            prim_path="{ENV_REGEX_NS}/Robot/panda_hand/front_cam",
+            update_period=0.1,
+            height=480,
+            width=640,
+            data_types=["rgb", "distance_to_image_plane", "semantic_segmentation"],
+            colorize_semantic_segmentation=True,
+            spawn=sim_utils.PinholeCameraCfg(
+                focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
+            ),
+            offset=CameraCfg.OffsetCfg(pos=(0, 0.0, 0), rot=(1, 0, 0, 0), convention="ros"),
+        )
 
-        )
         self.scene.camera_ext1 = TiledCameraCfg(
-        prim_path="{ENV_REGEX_NS}/exterior1",
-        update_period=0.1,
-        height=480,
-        width=640,
-        data_types=["rgb", "distance_to_image_plane","semantic_segmentation"],
-        spawn=sim_utils.PinholeCameraCfg(
-            focal_length=18.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 2.5)
-        ),
-        offset=CameraCfg.OffsetCfg(pos=(1.9359,-0.13245,0.27203), rot=(-0.49817,0.49817,0.50182,-0.50182), convention="ros"),
+            prim_path="{ENV_REGEX_NS}/exterior1",
+            update_period=0.1,
+            height=480,
+            width=640,
+            data_types=["rgb", "distance_to_image_plane", "semantic_segmentation"],
+            colorize_semantic_segmentation=True,
+            spawn=sim_utils.PinholeCameraCfg(
+                focal_length=18.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
+            ),
+            offset=CameraCfg.OffsetCfg(pos=(1.9359,-0.13245,0.27203), rot=(-0.49817,0.49817,0.50182,-0.50182), convention="ros"),
         )
+
         self.scene.camera_ext2 = TiledCameraCfg(
-        prim_path="{ENV_REGEX_NS}/exterior2",
-        update_period=0.1,
-        height=480,
-        width=640,
-        data_types=["rgb", "distance_to_image_plane","semantic_segmentation"],
-        spawn=sim_utils.PinholeCameraCfg(
-            focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
-        ),
-        offset=CameraCfg.OffsetCfg(pos=(0.5,1.2,0.32007), rot=(-0.05416,0.05416,0.70503,-0.70503), convention="ros"),
+            prim_path="{ENV_REGEX_NS}/exterior2",
+            update_period=0.1,
+            height=480,
+            width=640,
+            data_types=["rgb", "distance_to_image_plane", "semantic_segmentation"],
+            colorize_semantic_segmentation=True,
+            spawn=sim_utils.PinholeCameraCfg(
+                focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
+            ),
+            offset=CameraCfg.OffsetCfg(pos=(0.5,1.2,0.32007), rot=(-0.05416,0.05416,0.70503,-0.70503), convention="ros"),
         )
         self.scene.camera_bird = TiledCameraCfg(
-        prim_path="{ENV_REGEX_NS}/bird",
-        update_period=0.1,
-        height=480,
-        width=640,
-        data_types=["rgb", "distance_to_image_plane"],
-        spawn=sim_utils.PinholeCameraCfg(
-            focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
-        ),
-        offset=CameraCfg.OffsetCfg(pos=(0.68951,0.13776,2.33924), rot=(0.0317,-0.00871,0.99885,0.03491), convention="ros"),
+            prim_path="{ENV_REGEX_NS}/bird",
+            update_period=0.1,
+            height=480,
+            width=640,
+            data_types=["rgb", "distance_to_image_plane", "semantic_segmentation"],
+            colorize_semantic_segmentation=True,
+            spawn=sim_utils.PinholeCameraCfg(
+                focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
+            ),
+            offset=CameraCfg.OffsetCfg(pos=(0.68951,0.13776,2.33924), rot=(0.0317,-0.00871,0.99885,0.03491), convention="ros"),
         )
         # Set Cube as object
         self.scene.object = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Object",
             init_state=RigidObjectCfg.InitialStateCfg(pos=[0.5, 0, 0.055], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
-                usd_path=f"usd_assets/object.usd",
-                semantic_tags=[("class","object")],
+                usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
+                semantic_tags=[("class", "object")],
                 scale=(0.8, 0.8, 0.8),
                 rigid_props=RigidBodyPropertiesCfg(
                     solver_position_iteration_count=16,
@@ -107,34 +112,48 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
                 ),
             ),
         )
-        
+
+        # Table
         self.scene.table = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(
-            usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
-            semantic_tags=[("class","table")],
-            ),
+            prim_path="{ENV_REGEX_NS}/Table",
+            init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
+            spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
+                            semantic_tags=[("class", "table")]),
         )
-        self.scene.wall1 = AssetBaseCfg(
-            prim_path="{ENV_REGEX_NS}/wall1",
-            spawn=sim_utils.CuboidCfg(size=[5.0,0.1,5.0]),
-            init_state=AssetBaseCfg.InitialStateCfg(pos=[0.79755,-1.95479,-0.05549])
-        )
-
-        self.scene.wall2 = AssetBaseCfg(
-            prim_path="{ENV_REGEX_NS}/wall2",
-            spawn=sim_utils.CuboidCfg(size=[0.1,5.0,5.0]),
-            init_state=AssetBaseCfg.InitialStateCfg(pos=[-1.71779,0.59112,-0.05549])
-        )
-
         
+        # Wall
+        wall_size = 5.0
+        wall_thickness = 0.01
+        self.scene.cuboid_wall_1 = AssetBaseCfg(
+            prim_path="{ENV_REGEX_NS}/wall_1",
+            spawn=sim_utils.CuboidCfg(size=[wall_size, wall_thickness, wall_size]),
+            init_state=AssetBaseCfg.InitialStateCfg(pos=[0, wall_size/2, 0])
+        )
 
-        '''self.scene.light = AssetBaseCfg(
-            prim_path="{ENV_REGEX_NS}/lights",
-            init_state=AssetBaseCfg.InitialStateCfg(pos=[1.09699,0.49177,0.91408],rot=[0.70844,-0.01017,-0.01119,0.70561]),
-            spawn=sim_utils.DiskLightCfg(intensity=60000)
-        )'''
+        self.scene.cuboid_wall_2 = AssetBaseCfg(
+            prim_path="{ENV_REGEX_NS}/wall_2",
+            spawn=sim_utils.CuboidCfg(size=[wall_thickness, wall_size, wall_size]),
+            init_state=AssetBaseCfg.InitialStateCfg(pos=[-wall_size/2, 0, 0])
+        )
+
+        self.scene.cuboid_wall_3 = AssetBaseCfg(
+            prim_path="{ENV_REGEX_NS}/wall_3",
+            spawn=sim_utils.CuboidCfg(size=[wall_size, wall_thickness, wall_size]),
+            init_state=AssetBaseCfg.InitialStateCfg(pos=[0, -wall_size/2, 0])
+        )
+
+        self.scene.cuboid_wall_4 = AssetBaseCfg(
+            prim_path="{ENV_REGEX_NS}/wall_4",
+            spawn=sim_utils.CuboidCfg(size=[wall_thickness, wall_size, wall_size]),
+            init_state=AssetBaseCfg.InitialStateCfg(pos=[wall_size/2, 0, 0])
+        )
+
+        # self.scene.light = AssetBaseCfg(
+        #     prim_path="{ENV_REGEX_NS}/lights",
+        #     init_state=AssetBaseCfg.InitialStateCfg(pos=[1.09699,0.49177,0.91408],rot=[0.70844,-0.01017,-0.01119,0.70561]),
+        #     # spawn=sim_utils.DiskLightCfg(intensity=60000)
+        #     spawn=sim_utils.DiskLightCfg(intensity=60000, radius=3)
+        # )
 
         # Listens to the required transforms
         marker_cfg = FRAME_MARKER_CFG.copy()
