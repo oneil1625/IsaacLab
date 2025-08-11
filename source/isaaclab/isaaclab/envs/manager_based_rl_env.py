@@ -238,6 +238,80 @@ class ManagerBasedRLEnv(ManagerBasedEnv, gym.Env):
         # -- compute observations
         # note: done after reset to get the correct observations for reset envs
         self.obs_buf = self.observation_manager.compute()
+        ##############################
+        # FYP 2025S1-2903
+        # start
+        ##############################
+        env_ids = torch.arange(self.num_envs, device=self.device)    # Get env_ids to set visibility
+        # # (For Test only) Test saving orig semantic segmentation
+        # from isaaclab.sensors import save_images_to_file
+        # from datetime import datetime
+        # import os
+        # for camera_name in self.scene.sensors.keys():
+        #     if "camera" in camera_name:
+        #         tmp_semantic_seg = self.scene.sensors[camera_name].data.output["semantic_segmentation"].clone() # get the image
+        #         tmp_semantic_seg = tmp_semantic_seg / 255.0
+        #         frame_idx = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        #         img_file_name = "{}_semantic_segmentation_orig_{}.png".format(camera_name, frame_idx)
+        #         save_images_to_file(tmp_semantic_seg, os.path.join("data/frames/", img_file_name))
+        
+        # 1. add image with all objects invisible
+        rigid_objects = self.scene.rigid_objects['object']                 # get rigid objects
+        rigid_objects.set_visibility(False, env_ids=env_ids)               # set object invisible
+        self.sim.render()                                                  # render
+        #    iterate all cameras
+        for camera_name in self.scene.sensors.keys():
+            if "camera" in camera_name and "semantic_segmentation" in self.scene.sensors[camera_name].data.output:
+                # Iterate a few times to let the asset fade out
+                for _ in range(5):
+                    self.scene.sensors[camera_name].reset()                           # reset
+                self.scene.sensors[camera_name].update(dt=0, force_recompute=True)    # update the camera sensor
+                # Save semantic segmentation to self.extras
+                tmp_semantic_seg = self.scene.sensors[camera_name].data.output["semantic_segmentation"].clone() # get the image
+                self.extras["{}_semantic_segmentation_object_invisible".format(camera_name)] = tmp_semantic_seg # get the image
+                
+                # # (For Test only) (write to disk is time-consuming)
+                # tmp_semantic_seg = tmp_semantic_seg / 255.0
+                # frame_idx = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                # img_file_name = "{}_semantic_segmentation_object_invisible_{}.png".format(camera_name, frame_idx)
+                # save_images_to_file(tmp_semantic_seg, os.path.join("data/frames/", img_file_name))
+        rigid_objects.set_visibility(True, env_ids=env_ids)                # restore object visibility
+
+        # 2. add image with robot invisible
+        robots = self.scene.articulations['robot']                         # get robot
+        robots.set_visibility(False, env_ids=env_ids)                      # set robot invisible
+        self.sim.render()                                                  # render
+        #    iterate all cameras
+        for camera_name in self.scene.sensors.keys():
+            if "camera" in camera_name and "semantic_segmentation" in self.scene.sensors[camera_name].data.output:
+                # Iterate a few times to let the asset fade out
+                for _ in range(5):
+                    self.scene.sensors[camera_name].reset()                           # reset
+                self.scene.sensors[camera_name].update(dt=0, force_recompute=True)    # update the camera sensor
+                # Save semantic segmentation to self.extras
+                tmp_semantic_seg = self.scene.sensors[camera_name].data.output["semantic_segmentation"].clone() # get the image
+                self.extras["{}_semantic_segmentation_robot_invisible".format(camera_name)] = tmp_semantic_seg # get the image
+                
+                # # (For Test only) (write to disk is time-consuming)
+                # tmp_semantic_seg = tmp_semantic_seg / 255.0
+                # frame_idx = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                # img_file_name = "{}_semantic_segmentation_robot_invisible_{}.png".format(camera_name, frame_idx)
+                # save_images_to_file(tmp_semantic_seg, os.path.join("data/frames/", img_file_name))
+        robots.set_visibility(True, env_ids=env_ids)                       # restore robot visibility
+        
+        # Clear sensor buffer
+        for camera_name in self.scene.sensors.keys():
+            if "camera" in camera_name and "semantic_segmentation" in self.scene.sensors[camera_name].data.output:
+                # Iterate a few times to let the asset fade out
+                for _ in range(5):
+                    self.scene.sensors[camera_name].reset()                           # reset
+                self.scene.sensors[camera_name].update(dt=0, force_recompute=True)    # update the camera sensor
+        for _ in range(2):
+            self.sim.render()
+        ##############################
+        # FYP 2025S1-2903 
+        # end
+        ##############################
 
         # return observations, rewards, resets and extras
         return self.obs_buf, self.reward_buf, self.reset_terminated, self.reset_time_outs, self.extras
