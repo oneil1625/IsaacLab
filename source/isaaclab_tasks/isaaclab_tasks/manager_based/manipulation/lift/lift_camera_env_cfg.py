@@ -20,14 +20,19 @@ from isaaclab.sensors.frame_transformer.frame_transformer_cfg import FrameTransf
 from isaaclab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from isaaclab.utils import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
-
 from . import mdp
 
 ##
 # Scene definition
 ##
 
+def flat_image(env, obs_manager, term_name, kwargs):
+    sensor_cfg = kwargs["sensor_cfg"]
+    data_type = kwargs.get("data_type")
+    img = mdp.image(env, obs_manager, term_name, sensor_cfg=sensor_cfg, data_type=data_type)
+    return img.view(img.shape[0], -1)
 
+from isaaclab.sensors import TiledCameraCfg
 @configclass
 class ObjectTableSceneCfg(InteractiveSceneCfg):
     """Configuration for the lift scene with a robot and a object.
@@ -41,13 +46,15 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
     ee_frame: FrameTransformerCfg = MISSING
     # target object: will be populated by agent env cfg
     object: RigidObjectCfg | DeformableObjectCfg = MISSING
-
-    # Table
-    table = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
-    )
+    table: AssetBaseCfg = MISSING
+    
+    # # Table
+    # table = AssetBaseCfg(
+    #     prim_path="{ENV_REGEX_NS}/Table",
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
+    #     spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
+    #                      semantic_tags=[("class", "table")]),
+    # )
 
     # plane
     plane = AssetBaseCfg(
@@ -56,12 +63,26 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         spawn=GroundPlaneCfg(),
     )
 
+    # # lights
+    # light:AssetBaseCfg = MISSING
+
     # lights
     light = AssetBaseCfg(
         prim_path="/World/light",
-        spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=3000.0),
+        spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=12000.0),
+        # spawn=sim_utils.DistantLightCfg(color=(0.75, 0.75, 0.75), intensity=6000.0),
     )
 
+    cuboid_wall_1:AssetBaseCfg = MISSING
+    cuboid_wall_2:AssetBaseCfg = MISSING
+    cuboid_wall_3:AssetBaseCfg = MISSING
+    cuboid_wall_4:AssetBaseCfg = MISSING
+
+    # Important: add camera to the scene after other, so other assests can be visible to the cameras.
+    camera: TiledCameraCfg = MISSING
+    camera_ext1: TiledCameraCfg = MISSING
+    camera_ext2: TiledCameraCfg = MISSING
+    camera_bird: TiledCameraCfg = MISSING
 
 ##
 # MDP settings
@@ -76,7 +97,7 @@ class CommandsCfg:
         asset_name="robot",
         body_name=MISSING,  # will be set by agent env cfg
         resampling_time_range=(5.0, 5.0),
-        debug_vis=True,
+        debug_vis=False,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
             pos_x=(0.4, 0.6), pos_y=(-0.25, 0.25), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
@@ -92,14 +113,15 @@ class ActionsCfg:
     gripper_action: mdp.BinaryJointPositionActionCfg = MISSING
 
 
+
 @configclass
 class ObservationsCfg:
     """Observation specifications for the MDP."""
-
+    
     @configclass
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
-
+       
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
         object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
@@ -108,10 +130,26 @@ class ObservationsCfg:
 
         def __post_init__(self):
             self.enable_corruption = True
-            self.concatenate_terms = True
+            self.concatenate_terms = False
+   
+    
+    @configclass
+    class ImageCfg(ObsGroup):
+        """Observations for image group."""
+        image = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
+        image1 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_ext1"), "data_type": "semantic_segmentation"})
+        image2 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
+        image3 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
+        
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = False
+    
+
 
     # observation groups
     policy: PolicyCfg = PolicyCfg()
+    image: ImageCfg = ImageCfg()
 
 
 @configclass
@@ -191,11 +229,11 @@ class CurriculumCfg:
 
 
 @configclass
-class LiftEnvCfg(ManagerBasedRLEnvCfg):
+class LiftCameraEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the lifting environment."""
 
     # Scene settings
-    scene: ObjectTableSceneCfg = ObjectTableSceneCfg(num_envs=4096, env_spacing=2.5)
+    scene: ObjectTableSceneCfg = ObjectTableSceneCfg(num_envs=4, env_spacing=5)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
@@ -205,7 +243,6 @@ class LiftEnvCfg(ManagerBasedRLEnvCfg):
     terminations: TerminationsCfg = TerminationsCfg()
     events: EventCfg = EventCfg()
     curriculum: CurriculumCfg = CurriculumCfg()
-
     def __post_init__(self):
         """Post initialization."""
         # general settings
@@ -214,7 +251,7 @@ class LiftEnvCfg(ManagerBasedRLEnvCfg):
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
         self.sim.render_interval = self.decimation
-
+        
         self.sim.physx.bounce_threshold_velocity = 0.2
         self.sim.physx.bounce_threshold_velocity = 0.01
         self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
