@@ -37,7 +37,7 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
         self.scene.table.spawn.semantic_tags = [("class", "table")]
         # Set Franka as robot
         self.scene.robot = FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-
+        
         # Set actions for the specific robot type (franka)
         self.actions.arm_action = mdp.JointPositionActionCfg(
             asset_name="robot", joint_names=["panda_joint.*"], scale=0.5, use_default_offset=True
@@ -73,6 +73,18 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
             focal_length=18.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 2.5)
         ),
         offset=CameraCfg.OffsetCfg(pos=(1.9359,-0.13245,0.27203), rot=(-0.49817,0.49817,0.50182,-0.50182), convention="ros"),
+        colorize_semantic_segmentation=False
+        '''
+        {'semantic_segmentation': {'idToLabels': {'0': {'class': 'BACKGROUND'}, 
+        '1': {'class': 'UNLABELLED'}, '2': {'class': 'robot'}, 
+        '3': {'class': 'object'}, '4': {'class': 'table'}}}}
+        torch.Size([4, 480, 640, 1])
+        '''
+        # semantic_segmentation_mapping = {
+        #     "class:object": (255, 36, 66, 255),
+        #     "class:table": (255, 237, 218, 255),
+        #     "class:robot": (61, 178, 255, 255),
+        # },
         )
         self.scene.camera_ext2 = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/exterior2",
