@@ -269,3 +269,32 @@ def save_images_to_file(images: torch.Tensor, file_path: str):
     save_image(
         make_grid(torch.swapaxes(images.unsqueeze(1), 1, -1).squeeze(-1), nrow=round(images.shape[0] ** 0.5)), file_path
     )
+
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import torch
+
+# Helper function for depth visualization
+def depth_to_rgba(depth_tensor, depth_min=0.0, depth_max=5.0):
+    """
+    Convert depth tensor to colored visualization using turbo colormap.
+    
+    Args:
+        depth_tensor: Input depth tensor
+        depth_min: Minimum depth value for normalization
+        depth_max: Maximum depth value for normalization
+    
+    Returns:
+        colored_depth: RGB tensor of colored depth visualization
+    """
+    # Clip and normalize depth values
+    depth_clipped = torch.clip(depth_tensor, min=depth_min, max=depth_max)
+    depth_normalized = (depth_clipped - depth_min) / (depth_max - depth_min)
+    
+    # Convert to numpy for matplotlib colormapping
+    depth_np = depth_normalized.squeeze().cpu().numpy()
+    
+    # Apply turbo colormap
+    colored_depth = torch.tensor(cm.turbo(depth_np))
+    
+    return colored_depth
