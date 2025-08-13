@@ -26,13 +26,6 @@ from . import mdp
 # Scene definition
 ##
 
-def flat_image(env, obs_manager, term_name, kwargs):
-    sensor_cfg = kwargs["sensor_cfg"]
-    data_type = kwargs.get("data_type")
-    img = mdp.image(env, obs_manager, term_name, sensor_cfg=sensor_cfg, data_type=data_type)
-    return img.view(img.shape[0], -1)
-
-from isaaclab.sensors import TiledCameraCfg
 @configclass
 class ObjectTableSceneCfg(InteractiveSceneCfg):
     """Configuration for the lift scene with a robot and a object.
@@ -46,15 +39,14 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
     ee_frame: FrameTransformerCfg = MISSING
     # target object: will be populated by agent env cfg
     object: RigidObjectCfg | DeformableObjectCfg = MISSING
-    table: AssetBaseCfg = MISSING
     
-    # # Table
-    # table = AssetBaseCfg(
-    #     prim_path="{ENV_REGEX_NS}/Table",
-    #     init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
-    #     spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
-    #                      semantic_tags=[("class", "table")]),
-    # )
+    # Table
+    table = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/Table",
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
+        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
+                         semantic_tags=[("class", "table")]),
+    )
 
     # plane
     plane = AssetBaseCfg(
@@ -63,26 +55,11 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         spawn=GroundPlaneCfg(),
     )
 
-    # # lights
-    # light:AssetBaseCfg = MISSING
-
     # lights
     light = AssetBaseCfg(
         prim_path="/World/light",
         spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=12000.0),
-        # spawn=sim_utils.DistantLightCfg(color=(0.75, 0.75, 0.75), intensity=6000.0),
     )
-
-    cuboid_wall_1:AssetBaseCfg = MISSING
-    cuboid_wall_2:AssetBaseCfg = MISSING
-    cuboid_wall_3:AssetBaseCfg = MISSING
-    cuboid_wall_4:AssetBaseCfg = MISSING
-
-    # Important: add camera to the scene after other, so other assests can be visible to the cameras.
-    camera: TiledCameraCfg = MISSING
-    camera_ext1: TiledCameraCfg = MISSING
-    camera_ext2: TiledCameraCfg = MISSING
-    camera_bird: TiledCameraCfg = MISSING
 
 ##
 # MDP settings
@@ -137,9 +114,9 @@ class ObservationsCfg:
     class ImageCfg(ObsGroup):
         """Observations for image group."""
         image = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
-        image1 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_ext1"), "data_type": "semantic_segmentation"})
-        image2 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
-        image3 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
+        image1 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_ext1"), "data_type": "rgb"})
+        image2 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_ext2"), "data_type": "rgb"})
+        image3 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_bird"), "data_type": "rgb"})
         
         def __post_init__(self):
             self.enable_corruption = True
