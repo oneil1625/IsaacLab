@@ -74,6 +74,7 @@ import omni.usd
 import math
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import isaaclab.utils.math as math_utils
 def main():
     """Random actions agent with Isaac Lab environment."""
     # create environment configuration
@@ -98,11 +99,14 @@ def main():
     import isaaclab.sim as sim_utils
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
+    import isaaclab.utils.io as io_utils
     from PIL import Image
     import numpy as np
     sensor = env.unwrapped.scene["camera_ext1"]
+    sensor1 = env.unwrapped.scene["camera_ext2"]
+    sensor2 = env.unwrapped.scene["camera_bird"]
         # Create replicator writer
-
+    asset = env.unwrapped.scene["object"]
     output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "output", "camera")
     os.makedirs(output_dir, exist_ok=True)
     rep_writer = rep.BasicWriter(
@@ -141,7 +145,44 @@ def main():
             actions = 2 * torch.rand(env.action_space.shape, device=env.unwrapped.device) - 1
             # apply actions
             obs,_,_,_,_ = env.step(actions)
+            pose_range = {"x": (-3.0, 2.0), "y": (-2.0, 2.0), "z": (-2.0,2.0)}
+            root_states = asset.data.default_root_state.clone()
 
+            range_list = [pose_range.get(key, (0.0, 0.0)) for key in ["x", "y", "z"]]
+            ranges = torch.tensor(range_list, device=asset.device)
+            rand_samples = math_utils.sample_uniform(ranges[:, 0], ranges[:, 1], (env_cfg.scene.num_envs, 3), device=asset.device)
+
+            positions = root_states[:, 0:3] + env.unwrapped.scene.env_origins+ rand_samples
+            orientations = math_utils.random_orientation(env_cfg.scene.num_envs, device=asset.device)
+            
+            # set into the physics simulation
+            asset.write_root_pose_to_sim(torch.cat([positions, orientations], dim=-1))
+
+            for _ in range(40):
+                env.render() 
+            sensor.reset()
+            sensor.update(dt=0, force_recompute=True)   
+            images = sensor.data.output["rgb"]
+            images1 = sensor1.data.output["rgb"]
+            images2 = sensor2.data.output["rgb"]
+            
+            
+            
+            #   Note: for semantic segmentation, one render() call is enough, but for rgb, multiple render() calls are needed.
+                                                        
+            save_images_to_file(images.cpu()/255.0,f"frames/front/random_rgb_{frame_idx:04d}.png")
+            save_images_to_file(images1.cpu()/255.0,f"frames/side/random_rgb_{frame_idx:04d}.png")
+            save_images_to_file(images2.cpu()/255.0,f"frames/bird/random_rgb_{frame_idx:04d}.png")
+            sensor.reset()
+            sensor.update(dt=0, force_recompute=True)
+            # import pdb;pdb.set_trace()
+            # # Save to a pickle file
+            # io_utils.dump_pickle("frames/object_state.pkl", positions)
+            # # Save the tensor to a file
+            # torch.save(positions, "position.pt")
+            # torch.save(images, "tensor.pt")
+            # # Save to a YAML file
+            # io_utils.dump_yaml("frames/object_state.yaml", positions)
             # Save images from camera at camera_index
             '''
             # note: BasicWriter only supports saving data in numpy format, so we need to convert the data to numpy.
@@ -221,80 +262,80 @@ def main():
             #image.save("frames/front/rgb_out{frame_idx:04d}.png")
             # obtain the input image
             t = torch.from_numpy(ans)'''
-            color_to_labels = sensor.data.info["semantic_segmentation"]
-            from pxr import Gf, Sdf
+            # color_to_labels = sensor.data.info["semantic_segmentation"]
+            # from pxr import Gf, Sdf
 
-            for i in range(env_cfg.scene.num_envs):
-                robot_path = f"/World/envs/env_{i}/Object"  # adjust if needed
-                prim = stage.GetPrimAtPath(robot_path)
-                apply_nested(hard_reset_prim_visibility(robot_path,True))
+            # for i in range(env_cfg.scene.num_envs):
+            #     robot_path = f"/World/envs/env_{i}/Object"  # adjust if needed
+            #     prim = stage.GetPrimAtPath(robot_path)
+            #     apply_nested(hard_reset_prim_visibility(robot_path,True))
                 
-                '''
-                if not prim.IsValid():
-                    print(f"[WARN] Robot prim not found at {robot_path}")
-                    continue
-                #UsdGeom.Imageable(prim).GetVisibilityAttr().Set("inherited")
-                #add_update_semantics(prim, 'object')
-                imageable = UsdGeom.Imageable(prim)
-                #imageable.GetVisibilityAttr().Set('visible')
-                #prim.CreateAttribute("semantics:class_object:params:semanticData:color", Sdf.ValueTypeNames.Color4f).Set(Gf.Vec4f(1.0, 0.0, 0.0, 1.0)) 
-                visibility_attr = imageable.GetVisibilityAttr()
+            #     '''
+            #     if not prim.IsValid():
+            #         print(f"[WARN] Robot prim not found at {robot_path}")
+            #         continue
+            #     #UsdGeom.Imageable(prim).GetVisibilityAttr().Set("inherited")
+            #     #add_update_semantics(prim, 'object')
+            #     imageable = UsdGeom.Imageable(prim)
+            #     #imageable.GetVisibilityAttr().Set('visible')
+            #     #prim.CreateAttribute("semantics:class_object:params:semanticData:color", Sdf.ValueTypeNames.Color4f).Set(Gf.Vec4f(1.0, 0.0, 0.0, 1.0)) 
+            #     visibility_attr = imageable.GetVisibilityAttr()
     
-                # Remove the visibility attribute entirely (clears any overrides)
-                if visibility_attr.HasAuthoredValueOpinion():
-                    prim.RemoveProperty('visibility')
+            #     # Remove the visibility attribute entirely (clears any overrides)
+            #     if visibility_attr.HasAuthoredValueOpinion():
+            #         prim.RemoveProperty('visibility')
 
-                # Recreate the attribute to force a fresh value
-                visibility_attr = imageable.CreateVisibilityAttr()
-                visibility_attr.Set('visible')
-                '''
+            #     # Recreate the attribute to force a fresh value
+            #     visibility_attr = imageable.CreateVisibilityAttr()
+            #     visibility_attr.Set('visible')
+            #     '''
 
 
             
 
-            images = sensor.data.output["semantic_segmentation"]
+            # images = sensor.data.output["semantic_segmentation"]
             
-            draw_semantic(images,sensor,frame_idx)
+            # draw_semantic(images,sensor,frame_idx)
            
-            robot = env_cfg.scene.robot.prim_path
-            prim = stage.GetPrimAtPath('/World/envs/env_0/Robot')
+            # robot = env_cfg.scene.robot.prim_path
+            # prim = stage.GetPrimAtPath('/World/envs/env_0/Robot')
             
             #
             #vis = prim.GetAttribute("visibility")
             
-            for i in range(env_cfg.scene.num_envs):
-                robot_path = f"/World/envs/env_{i}/Object"  # adjust if needed
-                hard_reset_prim_visibility(robot_path,False)
-                '''
-                prim = stage.GetPrimAtPath(robot_path)
-                if not prim.IsValid():
-                    print(f"[WARN] Robot prim not found at {robot_path}")
-                    continue
-                # Option A: Remove the semantic label entirely
-                #prim.RemoveProperty("semantics:class_object:params:semanticData")
-                #UsdGeom.Imageable(prim).GetVisibilityAttr().Set("invisible")
-                #UsdGeom.Imageable(prim).MakeInvisible()
-                #imageable = UsdGeom.Imageable(prim)
-                #imageable.GetVisibilityAttr().Set('invisible')
-                imageable = UsdGeom.Imageable(prim)
-                visibility_attr = imageable.GetVisibilityAttr()
+            # for i in range(env_cfg.scene.num_envs):
+            #     robot_path = f"/World/envs/env_{i}/Object"  # adjust if needed
+            #     hard_reset_prim_visibility(robot_path,False)
+            #     '''
+            #     prim = stage.GetPrimAtPath(robot_path)
+            #     if not prim.IsValid():
+            #         print(f"[WARN] Robot prim not found at {robot_path}")
+            #         continue
+            #     # Option A: Remove the semantic label entirely
+            #     #prim.RemoveProperty("semantics:class_object:params:semanticData")
+            #     #UsdGeom.Imageable(prim).GetVisibilityAttr().Set("invisible")
+            #     #UsdGeom.Imageable(prim).MakeInvisible()
+            #     #imageable = UsdGeom.Imageable(prim)
+            #     #imageable.GetVisibilityAttr().Set('invisible')
+            #     imageable = UsdGeom.Imageable(prim)
+            #     visibility_attr = imageable.GetVisibilityAttr()
     
-                # Remove the visibility attribute entirely (clears any overrides)
-                if visibility_attr.HasAuthoredValueOpinion():
-                    prim.RemoveProperty('visibility')
+            #     # Remove the visibility attribute entirely (clears any overrides)
+            #     if visibility_attr.HasAuthoredValueOpinion():
+            #         prim.RemoveProperty('visibility')
 
-                # Recreate the attribute to force a fresh value
-                visibility_attr = imageable.CreateVisibilityAttr()
-                visibility_attr.Set('invisible')
-                '''
+            #     # Recreate the attribute to force a fresh value
+            #     visibility_attr = imageable.CreateVisibilityAttr()
+            #     visibility_attr.Set('invisible')
+            #     '''
 
             
             
-            images_invis = sensor.data.output["semantic_segmentation"]
+            #images_invis = sensor.data.output["semantic_segmentation"]
 
 
 
-            draw_semantic(images_invis,sensor,frame_idx,False)
+            #draw_semantic(images_invis,sensor,frame_idx,False)
             
             
 
