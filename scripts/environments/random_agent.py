@@ -10,6 +10,11 @@
 ./isaaclab.bat -p scripts/environments/random_agent.py --enable_cameras --num_envs=1 --task=Isaac-Lift-Cube-Franka-IK-Abs-v0 --headless
 ./isaaclab.sh -p scripts/environments/random_agent.py --enable_cameras --num_envs=1 --task=Isaac-Lift-Cube-Franka-IK-Abs-v0 --headless
 '''
+# import os
+
+# os.environ['CUDA_LAUNCH_BLOCKING']="1"
+# os.environ['TORCH_USE_CUDA_DSA'] = "1"
+
 import argparse
 
 from isaaclab.app import AppLauncher
@@ -86,7 +91,7 @@ def main():
     )
     # create environment
     env = gym.make(args_cli.task, cfg=env_cfg)
-
+    
     # print info (this is vectorized environment)
     print(f"[INFO]: Gym observation space: {env.observation_space}")
     print(f"[INFO]: Gym action space: {env.action_space}")
@@ -107,24 +112,36 @@ def main():
     sensor2 = env.unwrapped.scene["camera_bird"]
         # Create replicator writer
     asset = env.unwrapped.scene["object"]
-    output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "output", "camera")
-    os.makedirs(output_dir, exist_ok=True)
-    rep_writer = rep.BasicWriter(
+    robot = env.unwrapped.scene["robot"]
+    # output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "output", "camera")
+    # os.makedirs(output_dir, exist_ok=True)
+    # rep_writer = rep.BasicWriter(
 
-        output_dir=output_dir,
+    #     output_dir=output_dir,
 
-        frame_padding=0,
+    #     frame_padding=0,
 
 
-    )
-    rep_writer.initialize(output_dir=output_dir)
+    # )
+    # rep_writer.initialize(output_dir=output_dir)
 
     camera_index = args_cli.camera_id
     
     stage = omni.usd.get_context().get_stage()
     # reset environment
     env.reset()
-    
+    import csv
+    import os
+
+    # File to write to
+    csv_file = "log.csv"
+
+    # If file doesn’t exist yet, create and write header
+    file_exists = os.path.isfile(csv_file)
+    with open(csv_file, mode="a", newline="") as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(["frame", "env_id", "cube_pos", "cube_ore","robot_pos","robot_ore","cube_chnged_pos","cube_changed_ore","front_img_rgb"])  # header row
     while simulation_app.is_running():
         # run everything in inference mode
         with torch.inference_mode():
@@ -154,36 +171,72 @@ def main():
 
             positions = root_states[:, 0:3] + env.unwrapped.scene.env_origins+ rand_samples
             orientations = math_utils.random_orientation(env_cfg.scene.num_envs, device=asset.device)
-            
+            #quaternion orientation in (w, x, y, z)
             # set into the physics simulation
             asset.write_root_pose_to_sim(torch.cat([positions, orientations], dim=-1))
+
+            from isaaclab.utils.math import subtract_frame_transforms
+
+            robot_pos = robot._data.root_state_w[:,:3]
+            robot_ore = robot._data.root_state_w[:,3:7]
+
+            cube_changed = subtract_frame_transforms(positions,orientations,robot_pos,robot_ore)
+            cube_changed_pos = cube_changed[0]
+            cube_changed_ore = cube_changed[1]
+
+
 
             for _ in range(40):
                 env.render() 
             sensor.reset()
             sensor.update(dt=0, force_recompute=True)   
             images = sensor.data.output["rgb"]
-            images1 = sensor1.data.output["rgb"]
-            images2 = sensor2.data.output["rgb"]
+            #images1 = sensor1.data.output["rgb"]
+           # images2 = sensor2.data.output["rgb"]
             
-            
+            # Append row to CSV
+            with open(csv_file, mode="a", newline="") as f:
+                writer = csv.writer(f)
+                for i in range(env_cfg.scene.num_envs):
+                    writer.writerow([frame_idx, i, positions[i].cpu().numpy(), orientations[i].cpu().numpy(),robot._data.root_state_w[i][:3].cpu().numpy(),robot._data.root_state_w[i][3:7].cpu().numpy(),cube_changed_pos[i].cpu().numpy(),cube_changed_ore[i].cpu().numpy(),f"frames/front/random_rgb_{frame_idx:04d}.jpg"])
             
             #   Note: for semantic segmentation, one render() call is enough, but for rgb, multiple render() calls are needed.
                                                         
-            save_images_to_file(images.cpu()/255.0,f"frames/front/random_rgb_{frame_idx:04d}.png")
-            save_images_to_file(images1.cpu()/255.0,f"frames/side/random_rgb_{frame_idx:04d}.png")
-            save_images_to_file(images2.cpu()/255.0,f"frames/bird/random_rgb_{frame_idx:04d}.png")
+            #save_images_to_file(images.cpu()/255.0,f"frames/front/random_rgb_{frame_idx:04d}.jpg")
+            #save_images_to_file(images1.cpu()/255.0,f"frames/side/random_rgb_{frame_idx:04d}.png")
+            #save_images_to_file(images2.cpu()/255.0,f"frames/bird/random_rgb_{frame_idx:04d}.png")
+            from torchvision.utils import make_grid, save_image
+            #import pdb; pdb.set_trace()
+            # for i in range(env_cfg.scene.num_envs):
+            #     save_image(torch.swapaxes(images[i], 0, -1).cpu()/255.0,f"frames/random_rgb_{i}_{frame_idx:04d}.png")
+
+            
+            #import pdb;pdb.set_trace()
+            # Save to a pickle file
+            #body = asset._data.root_state_w
+            #print(body)
+            #     io_utils.dump_pickle(f"frames/cube_data/position/pkl/cube_pos_{frame_idx:04d}.pkl", positions)
+            #     io_utils.dump_pickle(f"frames/cube_data/orientation/pkl/cube_ore_{frame_idx:04d}.pkl", orientations)
+            #     io_utils.dump_pickle(f"frames/cube_data/pkl/cube_data_{frame_idx:04d}.pkl", body)
+            #     io_utils.dump_pickle(f"frames/pkl/cam_{frame_idx:04d}.pkl", images)
+            #     #io_utils.dump_pickle(f"frames/pkl/full/cam_full_res_{frame_idx:04d}.pkl", images1)
+            #     # Save the tensor to a file
+            #     torch.save(positions, f"frames/cube_data/position/pt/cube_pos_{frame_idx:04d}.pt")
+            #     torch.save(orientations, f"frames/cube_data/orientation/pt/cube_ore_{frame_idx:04d}.pt")
+            #     torch.save(body, f"frames/cube_data/pt/cube_data_{frame_idx:04d}.pt")
+            #     torch.save(images, f"frames/pt/cam_{frame_idx:04d}.pt")
+            #     #torch.save(images1, f"frames/pt/full/cam_full_res_{frame_idx:04d}.pt")
+            #     # Save to a YAML file
+            #     io_utils.dump_yaml(f"frames/cube_data/position/yaml/cube_pos_{frame_idx:04d}.yaml", positions)
+            #     io_utils.dump_yaml(f"frames/cube_data/orientation/yaml/cube_ore_{frame_idx:04d}.yaml", orientations)
+            #     io_utils.dump_yaml(f"frames/cube_data/yaml/cube_data_{frame_idx:04d}.yaml", body)
+            #     io_utils.dump_yaml(f"frames/yaml/cam_{frame_idx:04d}.yaml", images)
+            #    # io_utils.dump_yaml(f"frames/yaml/full/cam_full_res_{frame_idx:04d}.yaml", images1)
+
+
             sensor.reset()
             sensor.update(dt=0, force_recompute=True)
-            # import pdb;pdb.set_trace()
-            # # Save to a pickle file
-            # io_utils.dump_pickle("frames/object_state.pkl", positions)
-            # # Save the tensor to a file
-            # torch.save(positions, "position.pt")
-            # torch.save(images, "tensor.pt")
-            # # Save to a YAML file
-            # io_utils.dump_yaml("frames/object_state.yaml", positions)
-            # Save images from camera at camera_index
+            #Save images from camera at camera_index
             '''
             # note: BasicWriter only supports saving data in numpy format, so we need to convert the data to numpy.
             for cam_idx in range(env_cfg.scene.num_envs):
