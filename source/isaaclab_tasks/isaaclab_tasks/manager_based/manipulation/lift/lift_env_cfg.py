@@ -68,8 +68,8 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
     # lights
     #light:AssetBaseCfg = MISSING
 
-    wall1:AssetBaseCfg = MISSING
-    wall2:AssetBaseCfg = MISSING
+    # wall1:AssetBaseCfg = MISSING
+    # wall2:AssetBaseCfg = MISSING
 
     
 
@@ -155,7 +155,20 @@ class EventCfg:
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object", body_names="Object"),
         },
+
+    
     )
+
+    # random_object_position = EventTerm(
+    #     func=mdp.reset_root_state_with_random_orientation,
+    #     mode="interval",
+    #     params={
+    #         "pose_range": {"x": (-3.0, 2.0), "y": (-2.0, 2.0), "z": (-2.0,2.0)},
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("object", body_names="Object"),
+    #     },
+        
+    # )
 
 
 @configclass
@@ -246,3 +259,5 @@ class LiftEnvCfg(ManagerBasedRLEnvCfg):
         self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
         self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024
         self.sim.physx.friction_correlation_distance = 0.00625
+
+        #self.events.random_object_position.interval_range_s=(0,self.sim.dt)
