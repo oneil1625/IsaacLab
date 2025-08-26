@@ -161,8 +161,22 @@ def main():
             frame_idx+=1
             actions = 2 * torch.rand(env.action_space.shape, device=env.unwrapped.device) - 1
             # apply actions
+            limits = robot._data.joint_pos_limits
+            # Suppose `limits` is your tensor of shape (num_envs, num_joints, 2)
+            low = limits[..., 0]
+            high = limits[..., 1]
+
+            # Uniform random sample in [low, high]
+            rand_joints = torch.rand_like(low) * (high - low) + low  # (num_envs, num_joints)
+
+
+            #import pdb; pdb.set_trace()
+
+            robot.write_joint_position_to_sim(rand_joints)
+            
+
             obs,_,_,_,_ = env.step(actions)
-            pose_range = {"x": (-3.0, 2.0), "y": (-2.0, 2.0), "z": (-2.0,2.0)}
+            pose_range = {"x": (-1.0, 1.0), "y": (-1.0, 1.0), "z": (-1.0,1.0)}
             root_states = asset.data.default_root_state.clone()
 
             range_list = [pose_range.get(key, (0.0, 0.0)) for key in ["x", "y", "z"]]
@@ -185,24 +199,27 @@ def main():
             cube_changed_ore = cube_changed[1]
 
 
+            # env.step(actions)
+            # for _ in range(50):
+            #     env.render()
 
-            for _ in range(40):
-                env.render() 
+
+            
             sensor.reset()
             sensor.update(dt=0, force_recompute=True)   
             images = sensor.data.output["rgb"]
             #images1 = sensor1.data.output["rgb"]
            # images2 = sensor2.data.output["rgb"]
             
-            # Append row to CSV
-            with open(csv_file, mode="a", newline="") as f:
-                writer = csv.writer(f)
-                for i in range(env_cfg.scene.num_envs):
-                    writer.writerow([frame_idx, i, positions[i].cpu().numpy(), orientations[i].cpu().numpy(),robot._data.root_state_w[i][:3].cpu().numpy(),robot._data.root_state_w[i][3:7].cpu().numpy(),cube_changed_pos[i].cpu().numpy(),cube_changed_ore[i].cpu().numpy(),f"frames/front/random_rgb_{frame_idx:04d}.jpg"])
+            # # Append row to CSV
+            # with open(csv_file, mode="a", newline="") as f:
+            #     writer = csv.writer(f)
+            #     for i in range(env_cfg.scene.num_envs):
+            #         writer.writerow([frame_idx, i, positions[i].cpu().numpy(), orientations[i].cpu().numpy(),robot._data.root_state_w[i][:3].cpu().numpy(),robot._data.root_state_w[i][3:7].cpu().numpy(),cube_changed_pos[i].cpu().numpy(),cube_changed_ore[i].cpu().numpy(),f"frames/front/random_rgb_{frame_idx:04d}.jpg"])
             
             #   Note: for semantic segmentation, one render() call is enough, but for rgb, multiple render() calls are needed.
                                                         
-            #save_images_to_file(images.cpu()/255.0,f"frames/front/random_rgb_{frame_idx:04d}.jpg")
+            save_images_to_file(images.cpu()/255.0,f"frames/front/random_rgb_{frame_idx:04d}.jpg")
             #save_images_to_file(images1.cpu()/255.0,f"frames/side/random_rgb_{frame_idx:04d}.png")
             #save_images_to_file(images2.cpu()/255.0,f"frames/bird/random_rgb_{frame_idx:04d}.png")
             from torchvision.utils import make_grid, save_image
@@ -234,8 +251,8 @@ def main():
             #    # io_utils.dump_yaml(f"frames/yaml/full/cam_full_res_{frame_idx:04d}.yaml", images1)
 
 
-            sensor.reset()
-            sensor.update(dt=0, force_recompute=True)
+            # sensor.reset()
+            # sensor.update(dt=0, force_recompute=True)
             #Save images from camera at camera_index
             '''
             # note: BasicWriter only supports saving data in numpy format, so we need to convert the data to numpy.
