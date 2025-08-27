@@ -34,13 +34,13 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
             "class:UNLABELLED": (125, 125, 125, 255),
             "class:BACKGROUND": (10, 10, 10, 255),
         }
-        self.scene.table.spawn.semantic_tags = [("class", "table")]
+        
         # Set Franka as robot
         self.scene.robot = FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
         
         # Set actions for the specific robot type (franka)
         self.actions.arm_action = mdp.JointPositionActionCfg(
-            asset_name="robot", joint_names=["panda_joint.*"], scale=0.5, use_default_offset=True
+            asset_name="robot", joint_names=["panda_joint.*"], scale=2, use_default_offset=True
         )
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
@@ -53,21 +53,22 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
 
         self.scene.camera = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/panda_hand/front_cam",
-        update_period=0.1,
+        update_period=0.0,
         height=480,
         width=640,
         data_types=["rgb", "distance_to_image_plane","semantic_segmentation"],
         spawn=sim_utils.PinholeCameraCfg(
-            focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
+            focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10)
         ),
         offset=CameraCfg.OffsetCfg(pos=(0, 0.0, 0), rot=(1, 0, 0, 0), convention="ros"),
 
         )
         self.scene.camera_ext1 = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/exterior1",
-        update_period=0.1,
-        height=480,
-        width=640,
+        update_period=0.0,
+        history_length = 0,
+        height=1080,
+        width=1920,
         data_types=["rgb", "distance_to_image_plane","semantic_segmentation"],
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10)
@@ -88,23 +89,23 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
         )
         self.scene.camera_ext2 = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/exterior2",
-        update_period=0.1,
+        update_period=0.0,
         height=480,
         width=640,
         data_types=["rgb", "distance_to_image_plane","semantic_segmentation"],
         spawn=sim_utils.PinholeCameraCfg(
-            focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
+            focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10)
         ),
         offset=CameraCfg.OffsetCfg(pos=(0.0,2.5,0.0), rot=(0.0,0.0,0.70711,-0.70711), convention="ros"),
         )
         self.scene.camera_bird = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/bird",
-        update_period=0.1,
+        update_period=0.0,
         height=480,
         width=640,
         data_types=["rgb", "distance_to_image_plane","semantic_segmentation"],
         spawn=sim_utils.PinholeCameraCfg(
-            focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
+            focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10)
         ),
         offset=CameraCfg.OffsetCfg(pos=(0,0,5.5), rot=(0.0,0.0,1.0,0.0), convention="ros"),
         )
@@ -122,7 +123,7 @@ class FrankaCubeLiftEnvCfg(LiftEnvCfg):
                     max_angular_velocity=1000.0,
                     max_linear_velocity=1000.0,
                     max_depenetration_velocity=5.0,
-                    disable_gravity=False,
+                    disable_gravity=True,
                 ),
             ),
         )

@@ -163,10 +163,11 @@ class EventCfg:
     #     func=mdp.reset_root_state_with_random_orientation,
     #     mode="interval",
     #     params={
-    #         "pose_range": {"x": (-3.0, 2.0), "y": (-2.0, 2.0), "z": (-2.0,2.0)},
+    #         "pose_range": {"x": (-1.0, 1.0), "y": (-1.0, 1.0), "z": (-1.0,1.0)},
     #         "velocity_range": {},
     #         "asset_cfg": SceneEntityCfg("object", body_names="Object"),
     #     },
+    #     interval_range_s=(0.0, 1.0),
         
     # )
 
@@ -261,3 +262,5 @@ class LiftEnvCfg(ManagerBasedRLEnvCfg):
         self.sim.physx.friction_correlation_distance = 0.00625
 
         #self.events.random_object_position.interval_range_s=(0,self.sim.dt)
+        self.sim.render.enable_dl_denoiser = False
+        #self.sim.render.antialiasing_mode = "FXAA"
