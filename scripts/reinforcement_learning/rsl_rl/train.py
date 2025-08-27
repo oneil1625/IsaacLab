@@ -28,6 +28,15 @@ parser.add_argument("--max_iterations", type=int, default=None, help="RL Policy 
 parser.add_argument(
     "--distributed", action="store_true", default=False, help="Run training with multiple GPUs or nodes."
 )
+parser.add_argument(
+    "--student_group", type=str, default=None,
+    help="Observation group to use for the STUDENT (e.g., camera_ext2)."
+)
+parser.add_argument(
+    "--teacher_group", type=str, default="policy",
+    help="Observation group to expose as TEACHER (default: policy)."
+)
+parser.add_argument("--teacher_ckpt", type=str, default=None, help="Path to PPO checkpoint to load into teacher.")
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
