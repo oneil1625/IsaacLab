@@ -290,6 +290,7 @@ def depth_to_rgba(depth_tensor, depth_min=0.0, depth_max=5.0):
     # Clip and normalize depth values
     depth_clipped = torch.clip(depth_tensor, min=depth_min, max=depth_max)
     depth_normalized = (depth_clipped - depth_min) / (depth_max - depth_min)
+<<<<<<< HEAD
 
     # Convert to numpy for matplotlib colormapping
     depth_np = depth_normalized.squeeze().cpu().numpy()
@@ -297,4 +298,13 @@ def depth_to_rgba(depth_tensor, depth_min=0.0, depth_max=5.0):
     # Apply turbo colormap
     colored_depth = torch.tensor(cm.turbo(depth_np))
 
+=======
+    
+    # Convert to numpy for matplotlib colormapping
+    depth_np = depth_normalized.squeeze().cpu().numpy()
+    
+    # Apply turbo colormap
+    colored_depth = torch.tensor(cm.turbo(depth_np))
+    
+>>>>>>> fyp_code_clean
     return colored_depth

@@ -1,5 +1,29 @@
 ![Isaac Lab](docs/source/_static/isaaclab.jpg)
+---
+# Adaption for Monash-CSIRO Joint FYP 2025S1-2903
 
+## Task: Isaac-Lift-Cube-Franka-Camera-v0
+### Changes
+* Task configuration
+   * Changes:
+      * Add camera config
+      * Add walls
+      * Add semantic segmentation tags
+   * Related files:
+      * `isaaclab/source/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/lift/lift_camera_env_cfg.py`
+      * `isaaclab/source/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/lift/config/franka/joint_pos_camera_env_cfg.py`
+* Get semantic segmentation for Preference User Model
+   * Changes:
+      * set object to be invisible, then get semantic segmentation, then reset object to be visible
+      * set robot to be invisible, then get semantic segmentation, then reset robot to be visible
+   * Related files:
+      * `isaaclab/source/isaaclab/isaaclab/envs/manager_based_rl_env.py`
+## How to use
+- Test with random agent
+   - `python isaaclab/scripts/environment/random_agent.py --task Isaac-Lift-Cube-Franka-Camera-v0 --num_envs 2 --enable_cameras`
+- Train rsl_rl PPO agent
+   - `python isaaclab/scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Lift-Cube-Franka-Camera-v0 --num_envs 2 --enable_cameras`
+   
 ---
 
 # Isaac Lab
