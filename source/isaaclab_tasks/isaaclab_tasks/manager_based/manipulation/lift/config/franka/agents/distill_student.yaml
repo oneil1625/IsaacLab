@@ -1,12 +1,15 @@
-# distill_student.yaml
 agent_cfg:
   algorithm:
     class_name: Distillation
     num_learning_epochs: 5
     learning_rate: 1e-3
-    # (add any other Distillation params you need)
   policy:
     class_name: StudentTeacher
     student_hidden_dims: [256, 256, 256]
-    teacher_hidden_dims: [256, 256, 256]   # must match your PPO actor
+    teacher_hidden_dims: [256, 256, 256]
   max_iterations: 2000
+  experiment_name: franka_lift
+env_cfg:
+  observations:
+    actor_group: camera_ext2
+    teacher_group: policy
