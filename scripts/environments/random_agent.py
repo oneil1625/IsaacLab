@@ -65,9 +65,9 @@ def main():
     print(f"[INFO]: Gym observation space: {env.observation_space}")
     print(f"[INFO]: Gym action space: {env.action_space}")
     scene = env.unwrapped.scene
-    from isaaclab.sensors.camera import TiledCamera
-    tiled_camera = scene["camera"]
-    data_type = "rgb"
+    # from isaaclab.sensors.camera import TiledCamera
+    # tiled_camera = scene["camera"]
+    # data_type = "rgb"
     frame_idx =0
     from isaaclab.sensors import TiledCameraCfg, CameraCfg, Camera
     import isaaclab.sim as sim_utils
@@ -76,9 +76,9 @@ def main():
     import isaaclab.utils.io as io_utils
     from PIL import Image
     import numpy as np
-    sensor = env.unwrapped.scene["camera_ext1"]
-    sensor1 = env.unwrapped.scene["camera_ext2"]
-    sensor2 = env.unwrapped.scene["camera_bird"]
+    # sensor = env.unwrapped.scene["camera_ext1"]
+    # sensor1 = env.unwrapped.scene["camera_ext2"]
+    # sensor2 = env.unwrapped.scene["camera_bird"]
         # Create replicator writer
     asset = env.unwrapped.scene["object"]
     robot = env.unwrapped.scene["robot"]
@@ -94,9 +94,9 @@ def main():
     # )
     # rep_writer.initialize(output_dir=output_dir)
 
-    camera_index = args_cli.camera_id
     
-    stage = omni.usd.get_context().get_stage()
+    
+    
     # reset environment
     env.reset()
     import csv
@@ -106,64 +106,64 @@ def main():
     csv_file = "log.csv"
 
     # If file doesn’t exist yet, create and write header
-    file_exists = os.path.isfile(csv_file)
-    with open(csv_file, mode="a", newline="") as f:
-        writer = csv.writer(f)
-        if not file_exists:
-            writer.writerow(["frame", "env_id", "cube_pos", "cube_ore","robot_pos","robot_ore","cube_chnged_pos","cube_changed_ore","front_img_rgb"])  # header row
+    # file_exists = os.path.isfile(csv_file)
+    # with open(csv_file, mode="a", newline="") as f:
+    #     writer = csv.writer(f)
+    #     if not file_exists:
+    #         writer.writerow(["frame", "env_id", "cube_pos", "cube_ore","robot_pos","robot_ore","cube_chnged_pos","cube_changed_ore","front_img_rgb"])  # header row
     while simulation_app.is_running():
         # run everything in inference mode
         with torch.inference_mode():
             # sample actions from -1 to 1
             actions = 2 * torch.rand(env.action_space.shape, device=env.unwrapped.device) - 1
             # apply actions
-            limits = robot._data.joint_pos_limits
-            # Suppose `limits` is your tensor of shape (num_envs, num_joints, 2)
-            low = limits[..., 0]
-            high = limits[..., 1]
+            # limits = robot._data.joint_pos_limits
+            # # Suppose `limits` is your tensor of shape (num_envs, num_joints, 2)
+            # low = limits[..., 0]
+            # high = limits[..., 1]
 
-            # Uniform random sample in [low, high]
-            rand_joints = torch.rand_like(low) * (high - low) + low  # (num_envs, num_joints)
+            # # Uniform random sample in [low, high]
+            # rand_joints = torch.rand_like(low) * (high - low) + low  # (num_envs, num_joints)
 
 
-            #import pdb; pdb.set_trace()
+            # #import pdb; pdb.set_trace()
 
-            robot.write_joint_position_to_sim(rand_joints)
+            # robot.write_joint_position_to_sim(rand_joints)
             
 
-            obs,_,_,_,_ = env.step(actions)
-            pose_range = {"x": (-1.0, 1.0), "y": (-1.0, 1.0), "z": (-1.0,1.0)}
-            root_states = asset.data.default_root_state.clone()
+            # obs,_,_,_,_ = env.step(actions)
+            # pose_range = {"x": (-1.0, 1.0), "y": (-1.0, 1.0), "z": (-1.0,1.0)}
+            # root_states = asset.data.default_root_state.clone()
 
-            range_list = [pose_range.get(key, (0.0, 0.0)) for key in ["x", "y", "z"]]
-            ranges = torch.tensor(range_list, device=asset.device)
-            rand_samples = math_utils.sample_uniform(ranges[:, 0], ranges[:, 1], (env_cfg.scene.num_envs, 3), device=asset.device)
+            # range_list = [pose_range.get(key, (0.0, 0.0)) for key in ["x", "y", "z"]]
+            # ranges = torch.tensor(range_list, device=asset.device)
+            # rand_samples = math_utils.sample_uniform(ranges[:, 0], ranges[:, 1], (env_cfg.scene.num_envs, 3), device=asset.device)
 
-            positions = root_states[:, 0:3] + env.unwrapped.scene.env_origins+ rand_samples
-            orientations = math_utils.random_orientation(env_cfg.scene.num_envs, device=asset.device)
-            #quaternion orientation in (w, x, y, z)
-            # set into the physics simulation
-            asset.write_root_pose_to_sim(torch.cat([positions, orientations], dim=-1))
+            # positions = root_states[:, 0:3] + env.unwrapped.scene.env_origins+ rand_samples
+            # orientations = math_utils.random_orientation(env_cfg.scene.num_envs, device=asset.device)
+            # #quaternion orientation in (w, x, y, z)
+            # # set into the physics simulation
+            # asset.write_root_pose_to_sim(torch.cat([positions, orientations], dim=-1))
 
-            from isaaclab.utils.math import subtract_frame_transforms
+            # from isaaclab.utils.math import subtract_frame_transforms
 
-            robot_pos = robot._data.root_state_w[:,:3]
-            robot_ore = robot._data.root_state_w[:,3:7]
+            # robot_pos = robot._data.root_state_w[:,:3]
+            # robot_ore = robot._data.root_state_w[:,3:7]
 
-            cube_changed = subtract_frame_transforms(positions,orientations,robot_pos,robot_ore)
-            cube_changed_pos = cube_changed[0]
-            cube_changed_ore = cube_changed[1]
+            # cube_changed = subtract_frame_transforms(positions,orientations,robot_pos,robot_ore)
+            # cube_changed_pos = cube_changed[0]
+            # cube_changed_ore = cube_changed[1]
 
 
-            # env.step(actions)
+            env.step(actions)
             # for _ in range(50):
             #     env.render()
 
 
             
-            sensor.reset()
-            sensor.update(dt=0, force_recompute=True)   
-            images = sensor.data.output["rgb"]
+            # sensor.reset()
+            # sensor.update(dt=0, force_recompute=True)   
+            # images = sensor.data.output["rgb"]
             #images1 = sensor1.data.output["rgb"]
            # images2 = sensor2.data.output["rgb"]
             
@@ -175,10 +175,10 @@ def main():
             
             #   Note: for semantic segmentation, one render() call is enough, but for rgb, multiple render() calls are needed.
                                                         
-            save_images_to_file(images.cpu()/255.0,f"frames/front/random_rgb_{frame_idx:04d}.jpg")
+            # save_images_to_file(images.cpu()/255.0,f"frames/front/random_rgb_{frame_idx:04d}.jpg")
             #save_images_to_file(images1.cpu()/255.0,f"frames/side/random_rgb_{frame_idx:04d}.png")
             #save_images_to_file(images2.cpu()/255.0,f"frames/bird/random_rgb_{frame_idx:04d}.png")
-            from torchvision.utils import make_grid, save_image
+            # from torchvision.utils import make_grid, save_image
             #import pdb; pdb.set_trace()
             # for i in range(env_cfg.scene.num_envs):
             #     save_image(torch.swapaxes(images[i], 0, -1).cpu()/255.0,f"frames/random_rgb_{i}_{frame_idx:04d}.png")
