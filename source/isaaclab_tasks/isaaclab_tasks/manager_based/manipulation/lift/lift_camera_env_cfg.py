@@ -41,10 +41,11 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
     object: RigidObjectCfg | DeformableObjectCfg = MISSING
     
     # Table
+    #
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.25, 0, -0.5], rot=[0.707, 0, 0, 0.707]),
+        spawn=UsdFileCfg(usd_path=f"usd_assets/FYP_shop_table_2.usd",scale=(0.01, 0.01, 0.01),
                          semantic_tags=[("class", "table")]),
     )
 
@@ -236,3 +237,4 @@ class LiftCameraEnvCfg(ManagerBasedRLEnvCfg):
         self.sim.physx.friction_correlation_distance = 0.00625
 
         self.sim.render.enable_dl_denoiser = False
+        self.sim.render.antialiasing_mode = "FXAA"
