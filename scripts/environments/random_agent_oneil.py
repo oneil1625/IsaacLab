@@ -65,9 +65,9 @@ def main():
     import matplotlib.patches as patches
     from PIL import Image
     import numpy as np
-    from isaaclab.sensors import save_images_to_file
+    from isaaclab.sensors import save_images_to_file, depth_to_rgba
     from torchvision.utils import make_grid, save_image
-
+    import csv
     sensor = env.unwrapped.scene["camera_ext1"]
     sensor1 = env.unwrapped.scene["camera_ext2"]
     sensor2 = env.unwrapped.scene["camera_bird"]
@@ -75,7 +75,15 @@ def main():
     robot = env.unwrapped.scene["robot"]
     # reset environment
     env.reset()
-    
+    # File to write to
+    csv_file = "log.csv"
+
+    # If file doesn’t exist yet, create and write header
+    file_exists = os.path.isfile(csv_file)
+    with open(csv_file, mode="a", newline="") as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(["frame", "env_id", "cube_pos", "cube_ore","robot_pos","robot_ore","cube_changed_pos","cube_changed_ore","front_img_rgb","side_img_rgb","bird_img_rgb","front_img_dp","side_img_dp","bird_img_dp"])  # header row
     while simulation_app.is_running():
         # run everything in inference mode
         with torch.inference_mode():
@@ -92,7 +100,7 @@ def main():
                 f.write(str(rgb_images))'''
             #save_images_to_file(env.unwrapped.observation_space["image"], f"frames/rgb_out_env0_{frame_idx:04d}.png")
             frame_idx+=1
-            actions = 2 * torch.rand(env.action_space.shape, device=env.unwrapped.device) - 1
+            actions = torch.zeros(env.action_space.shape, device=env.unwrapped.device)
             # apply actions
             
             limits = robot._data.joint_pos_limits
@@ -110,7 +118,7 @@ def main():
             
 
             obs,_,_,_,_ = env.step(actions)
-            pose_range = {"x": (-1.0, 1.0), "y": (-1.0, 1.0), "z": (-1.0,1.0)}
+            pose_range = {"x": (-1.0, 1.0), "y": (-1.0, 1.0), "z": (-0.1,1.0)}
             root_states = asset.data.default_root_state.clone()
 
             range_list = [pose_range.get(key, (0.0, 0.0)) for key in ["x", "y", "z"]]
@@ -132,28 +140,38 @@ def main():
             cube_changed_pos = cube_changed[0]
             cube_changed_ore = cube_changed[1]
 
-            obs,_,_,_,_ = env.step(actions)
-            # env.step(actions)
+            env.step(actions)
+            env.step(actions)
+            # import pdb; pdb.set_trace()
             # for _ in range(50):
             #     env.render()
-
-
+            cube_data = asset._data.root_link_pose_w
             
+            env.unwrapped.sim.render()
             sensor.reset()
             sensor.update(dt=0, force_recompute=True)   
             images = sensor.data.output["rgb"]
-            #images1 = sensor1.data.output["rgb"]
-           # images2 = sensor2.data.output["rgb"]
+            images1 = sensor1.data.output["rgb"]
+            images2 = sensor2.data.output["rgb"]
+            depth = sensor.data.output["depth"]
+            depth1 = sensor1.data.output["depth"]
+            depth2 = sensor2.data.output["depth"]
+            # Append row to CSV
+            with open(csv_file, mode="a", newline="") as f:
+                writer = csv.writer(f)
+                for i in range(env_cfg.scene.num_envs):
+                    save_images_to_file(images[i].cpu()/255.0,f"frames/front/rgb_env{i}_{frame_idx}.jpg")
+                    save_images_to_file(images1[i].cpu()/255.0,f"frames/side/rgb_env{i}_{frame_idx}.jpg")
+                    save_images_to_file(images2[i].cpu()/255.0,f"frames/bird/rgb_env{i}_{frame_idx}.jpg")
+                    save_images_to_file(depth_to_rgba(depth)[i][..., :3],f"frames/front/dp_env{i}_{frame_idx}.jpg")
+                    save_images_to_file(depth_to_rgba(depth1)[i][..., :3],f"frames/side/dp_env{i}_{frame_idx}.jpg")
+                    save_images_to_file(depth_to_rgba(depth2)[i][..., :3],f"frames/bird/dp_env{i}_{frame_idx}.jpg")
+                    writer.writerow([frame_idx, i, cube_data[i][:3].cpu().numpy(), cube_data[i][3:7].cpu().numpy(),robot._data.root_state_w[i][:3].cpu().numpy(),robot._data.root_state_w[i][3:7].cpu().numpy(),cube_changed_pos[i].cpu().numpy(),cube_changed_ore[i].cpu().numpy(),
+                                     f"frames/front/rgb_env{i}_{frame_idx}.jpg",f"frames/side/rgb_env{i}_{frame_idx}.jpg",f"frames/bird/rgb_env{i}_{frame_idx}.jpg",f"frames/front/dp_env{i}_{frame_idx}.jpg",f"frames/side/dp_env{i}_{frame_idx}.jpg",f"frames/bird/dp_env{i}_{frame_idx}.jpg"])
             
-            # # Append row to CSV
-            # with open(csv_file, mode="a", newline="") as f:
-            #     writer = csv.writer(f)
-            #     for i in range(env_cfg.scene.num_envs):
-            #         writer.writerow([frame_idx, i, positions[i].cpu().numpy(), orientations[i].cpu().numpy(),robot._data.root_state_w[i][:3].cpu().numpy(),robot._data.root_state_w[i][3:7].cpu().numpy(),cube_changed_pos[i].cpu().numpy(),cube_changed_ore[i].cpu().numpy(),f"frames/front/random_rgb_{frame_idx:04d}.jpg"])
-            
-            #   Note: for semantic segmentation, one render() call is enough, but for rgb, multiple render() calls are needed.
                                                         
-            save_images_to_file(images.cpu()/255.0,f"frames/front/random_rgb_{frame_idx:04d}.jpg")
+            
+
             # Save images from camera at camera_index
             '''
             # note: BasicWriter only supports saving data in numpy format, so we need to convert the data to numpy.
