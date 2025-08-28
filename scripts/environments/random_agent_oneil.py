@@ -130,22 +130,27 @@ def main():
             #quaternion orientation in (w, x, y, z)
             # set into the physics simulation
             asset.write_root_pose_to_sim(torch.cat([positions, orientations], dim=-1))
-
+            
             
 
             robot_pos = robot._data.root_state_w[:,:3]
             robot_ore = robot._data.root_state_w[:,3:7]
 
-            cube_changed = subtract_frame_transforms(positions,orientations,robot_pos,robot_ore)
-            cube_changed_pos = cube_changed[0]
-            cube_changed_ore = cube_changed[1]
+
 
             env.step(actions)
             env.step(actions)
+
+            cube_data = asset._data.root_link_pose_w
+            
+            cube_changed = subtract_frame_transforms(cube_data[...,:3],cube_data[...,3:7],robot_pos,robot_ore)
+
+            cube_changed_pos = cube_changed[0]
+            cube_changed_ore = cube_changed[1]
             # import pdb; pdb.set_trace()
             # for _ in range(50):
             #     env.render()
-            cube_data = asset._data.root_link_pose_w
+            
             
             env.unwrapped.sim.render()
             sensor.reset()
