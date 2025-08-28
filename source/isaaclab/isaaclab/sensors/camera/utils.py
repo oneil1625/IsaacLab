@@ -265,9 +265,11 @@ def save_images_to_file(images: torch.Tensor, file_path: str):
         file_path: The path to save the images to.
     """
     from torchvision.utils import make_grid, save_image
-
+    multiple_envs = 1
+    if len(images.size()) == 3:
+        multiple_envs = 0
     save_image(
-        make_grid(torch.swapaxes(images.unsqueeze(1), 1, -1).squeeze(-1), nrow=round(images.shape[0] ** 0.5)), file_path
+        make_grid(torch.swapaxes(images.unsqueeze(multiple_envs), 1, -1).squeeze(-1), nrow=round(images.shape[0] ** 0.5)), file_path
     )
 
 import matplotlib.pyplot as plt
