@@ -130,10 +130,20 @@ class ObservationsCfg:
     # ---------- Student (camera only) ----------
     @configclass
     class StudentCam(ObsGroup):
-        rgb = ObsTerm(func=mdp.camera_obs, params={"sensor_name": "camera_ext2"})
+        image = ObsTerm(
+        func=mdp.image,
+        params={
+            "sensor_cfg": SceneEntityCfg("camera_ext2"),
+            "data_type": "rgb",
+            "width": 64,         
+            "height": 64,
+            "normalize": True,
+            "flatten": False,
+        },
+    )
         def __post_init__(self):
-            self.concatenate_terms = True
-            self.concatenate_terms = False  # keep as (C,H,W) for CNN
+            self.enable_corruption = True
+            self.concatenate_terms = True  # keep as (C,H,W) for CNN
 
     # observation groups
     policy: PolicyCfg = PolicyCfg()
