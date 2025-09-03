@@ -143,7 +143,7 @@ class ObservationsCfg:
     )
         def __post_init__(self):
             self.enable_corruption = True
-            self.concatenate_terms = True  # keep as (C,H,W) for CNN
+            self.concatenate_terms = True  
 
     # observation groups
     policy: PolicyCfg = PolicyCfg()

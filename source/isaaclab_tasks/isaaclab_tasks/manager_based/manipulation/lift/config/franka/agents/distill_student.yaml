@@ -1,15 +1,18 @@
-agent_cfg:
-  algorithm:
-    class_name: Distillation
-    num_learning_epochs: 5
-    learning_rate: 1e-3
-  policy:
-    class_name: StudentTeacher
-    student_hidden_dims: [256, 256, 256]
-    teacher_hidden_dims: [256, 256, 256]
-  max_iterations: 2000
-  experiment_name: franka_lift
-env_cfg:
-  observations:
-    actor_group: camera_ext2
-    teacher_group: policy
+algorithm:
+  class_name: Distillation
+  num_learning_epochs: 5
+  learning_rate: 1e-3
+  gradient_length: 32
+  max_grad_norm: 1.0
+
+policy:
+  class_name: StudentTeacher
+  init_noise_std: 0.1
+  student_hidden_dims: [256, 256, 256]
+  teacher_hidden_dims: [256, 256, 256]
+  activation: elu
+
+max_iterations: 2000
+num_steps_per_env: 32
+save_interval: 50
+empirical_normalization: true
