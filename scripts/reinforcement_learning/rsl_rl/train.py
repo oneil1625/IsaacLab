@@ -196,6 +196,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             obs, r, d, t, info = self.env.step(act)
             obs, info = self._route(obs, info)
             return obs, r, d, t, info
+        env = _StudentTeacherObsWrapper(env,
+                                student_group=args_cli.student_group or "policy",
+                                teacher_group=args_cli.teacher_group or "policy")
 
     # convert to single-agent instance if required by the RL algorithm
     if isinstance(env.unwrapped, DirectMARLEnv):
