@@ -82,7 +82,7 @@ class FrankaCubeLiftCameraEnvCfg(LiftCameraEnvCfg):
         #     "class:table": (255, 237, 218, 255),
         #     "class:robot": (61, 178, 255, 255),
         # },
-        )
+        
 
         # External camera: side
         self.scene.camera_ext2 = TiledCameraCfg(
@@ -140,7 +140,9 @@ class FrankaCubeLiftCameraEnvCfg(LiftCameraEnvCfg):
             init_state=AssetBaseCfg.InitialStateCfg(pos=[0, wall_size/2, 0])
         )
 
-        self.scene.cuboid_wall_2 = AssetBaseCfg(
+        self./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py --headless --enable_cameras  --task=Isaac-Lift-Cube-Franka-Camera-v0 --num_envs=1  +franka/agents=distill_student
+
+.scene.cuboid_wall_2 = AssetBaseCfg(
             prim_path="{ENV_REGEX_NS}/wall_2",
             spawn=sim_utils.CuboidCfg(size=[wall_thickness, wall_size, wall_size]),
             init_state=AssetBaseCfg.InitialStateCfg(pos=[-wall_size/2, 0, 0])
