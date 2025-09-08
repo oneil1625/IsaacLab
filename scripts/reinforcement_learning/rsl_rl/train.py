@@ -119,6 +119,13 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         args_cli.max_iterations if args_cli.max_iterations is not None else agent_cfg.max_iterations
     )
 
+    if args_cli.teacher_ckpt:
+        print(f"[INFO]: Switching to Distillation + StudentTeacher because --teacher_ckpt was provided.")
+        agent_cfg.algorithm.class_name = "Distillation"
+        agent_cfg.policy.class_name = "StudentTeacher"
+        agent_cfg.policy.student_hidden_dims = [256, 256, 256]
+        agent_cfg.policy.teacher_hidden_dims = [256, 256, 256]
+        
     # set the environment seed
     # note: certain randomizations occur in the environment initialization so we set the seed here
     env_cfg.seed = agent_cfg.seed
@@ -198,13 +205,6 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
     # write git state to logs
     runner.add_git_repo_to_log(__file__)
-    # load the checkpoint
-    if args_cli.teacher_ckpt:
-        print(f"[INFO]: Switching to Distillation + StudentTeacher because --teacher_ckpt was provided.")
-        agent_cfg.algorithm.class_name = "Distillation"
-        agent_cfg.policy.class_name = "StudentTeacher"
-        agent_cfg.policy.student_hidden_dims = [256, 256, 256]
-        agent_cfg.policy.teacher_hidden_dims = [256, 256, 256]
 
     # dump the configuration into log-directory
     dump_yaml(os.path.join(log_dir, "params", "env.yaml"), env_cfg)
