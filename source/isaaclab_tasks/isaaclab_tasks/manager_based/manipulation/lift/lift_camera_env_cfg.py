@@ -133,8 +133,8 @@ class ObservationsCfg:
 
 
     # observation groups
-    policy: PolicyCfg = PolicyCfg()
-    image: ImageCfg = ImageCfg()
+    policy: ImageCfg = ImageCfg()
+    image: PolicyCfg = PolicyCfg()
 
 
 @configclass
