@@ -159,24 +159,43 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # Alias TEACHER observations to infos['observations']['teacher'] so RSL-RL distillation can find them.
     # This is a no-op for PPO.
     import gymnasium as _gym
-    class _TeacherObsAliasWrapper(_gym.Wrapper):
-        def __init__(self, env, teacher_group: str):
+    class _StudentTeacherObsWrapper(_gym.Wrapper):
+        """
+        Returns obs from the chosen student obs-group (e.g., 'camera_ext2').
+        Copies the chosen teacher obs-group into infos['observations']['teacher'].
+        This way RSL-RL Distillation gets student=obs and teacher=infos['observations']['teacher'].
+        """
+        def __init__(self, env, student_group: str, teacher_group: str):
             super().__init__(env)
+            self._student_group = student_group
             self._teacher_group = teacher_group
-        def _alias(self, info):
+
+        def _route(self, obs, info):
             obs_dict = info.get("observations", {})
+            # set teacher
             if self._teacher_group in obs_dict:
                 obs_dict["teacher"] = obs_dict[self._teacher_group]
             elif "critic" in obs_dict:
                 obs_dict["teacher"] = obs_dict["critic"]
             elif obs_dict:
+                # last resort: any available group
                 obs_dict["teacher"] = obs_dict[next(iter(obs_dict))]
             info["observations"] = obs_dict
+
+            # choose student observation to return
+            if self._student_group in obs_dict:
+                return obs_dict[self._student_group], info
+            # fall back to the original obs if group missing
+            return obs, info
+
         def reset(self, **kw):
-            obs, info = self.env.reset(**kw); self._alias(info); return obs, info
+            obs, info = self.env.reset(**kw)
+            return self._route(obs, info)
+
         def step(self, act):
-            obs, r, d, t, info = self.env.step(act); self._alias(info); return obs, r, d, t, info
-    env = _TeacherObsAliasWrapper(env, teacher_group=args_cli.teacher_group)
+            obs, r, d, t, info = self.env.step(act)
+            obs, info = self._route(obs, info)
+            return obs, r, d, t, info
 
     # convert to single-agent instance if required by the RL algorithm
     if isinstance(env.unwrapped, DirectMARLEnv):
