@@ -200,16 +200,11 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     runner.add_git_repo_to_log(__file__)
     # load the checkpoint
     if args_cli.teacher_ckpt:
-        # Ensure Distillation path is used (policy StudentTeacher, algorithm Distillation)
+        print(f"[INFO]: Switching to Distillation + StudentTeacher because --teacher_ckpt was provided.")
         agent_cfg.algorithm.class_name = "Distillation"
         agent_cfg.policy.class_name = "StudentTeacher"
-        print(f"[INFO]: Loading TEACHER checkpoint: {args_cli.teacher_ckpt}")
-        runner.load(args_cli.teacher_ckpt, load_optimizer=False)
-    else:
-        # PPO resume / regular resume path
-        if agent_cfg.resume or agent_cfg.algorithm.class_name == "Distillation":
-            print(f"[INFO]: Loading model checkpoint from: {resume_path}")
-            runner.load(resume_path)
+        agent_cfg.policy.student_hidden_dims = [256, 256, 256]
+        agent_cfg.policy.teacher_hidden_dims = [256, 256, 256]
 
     # dump the configuration into log-directory
     dump_yaml(os.path.join(log_dir, "params", "env.yaml"), env_cfg)
