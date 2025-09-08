@@ -88,8 +88,8 @@ class FrankaCubeLiftCameraEnvCfg(LiftCameraEnvCfg):
         self.scene.camera_ext2 = TiledCameraCfg(
             prim_path="{ENV_REGEX_NS}/exterior2",
             update_period=0.0,
-            height=64
-            width=64
+            height=64,
+            width=64,
             data_types=["rgb"],
             colorize_semantic_segmentation=False,
             spawn=sim_utils.PinholeCameraCfg(
