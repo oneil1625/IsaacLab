@@ -88,10 +88,10 @@ class FrankaCubeLiftCameraEnvCfg(LiftCameraEnvCfg):
         self.scene.camera_ext2 = TiledCameraCfg(
             prim_path="{ENV_REGEX_NS}/exterior2",
             update_period=0.0,
-            height=480*self.img_resolution_scale,
-            width=640*self.img_resolution_scale,
-            data_types=["rgb", "depth", "semantic_segmentation"],
-            colorize_semantic_segmentation=True,
+            height=64
+            width=64
+            data_types=["rgb"],
+            colorize_semantic_segmentation=False,
             spawn=sim_utils.PinholeCameraCfg(
                 focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10)
             ),
