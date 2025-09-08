@@ -122,6 +122,8 @@ class ObservationsCfg:
         params={
             "sensor_cfg": SceneEntityCfg("camera_ext2"),
             "data_type": "rgb",
+            "width": 64,
+            "height": 64,
             "normalize": True,
         },
         )
