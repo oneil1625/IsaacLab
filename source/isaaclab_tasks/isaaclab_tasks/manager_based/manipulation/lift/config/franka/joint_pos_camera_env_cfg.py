@@ -46,31 +46,31 @@ class FrankaCubeLiftCameraEnvCfg(LiftCameraEnvCfg):
         
         self.img_resolution_scale = 2    # sacle the image resolution
         # Eye-in-hand Camera
-        self.scene.camera = TiledCameraCfg(
-            prim_path="{ENV_REGEX_NS}/Robot/panda_hand/front_cam",
-            update_period=0.0,
-            height=480*self.img_resolution_scale,
-            width=640*self.img_resolution_scale,
-            data_types=["rgb", "depth", "semantic_segmentation"],
-            colorize_semantic_segmentation=True,
-            spawn=sim_utils.PinholeCameraCfg(
-                focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10)
-            ),
-            offset=CameraCfg.OffsetCfg(pos=(0, 0.0, 0), rot=(1, 0, 0, 0), convention="ros"),
-        )
+        # self.scene.camera = TiledCameraCfg(
+        #     prim_path="{ENV_REGEX_NS}/Robot/panda_hand/front_cam",
+        #     update_period=0.0,
+        #     height=480*self.img_resolution_scale,
+        #     width=640*self.img_resolution_scale,
+        #     data_types=["rgb", "depth", "semantic_segmentation"],
+        #     colorize_semantic_segmentation=True,
+        #     spawn=sim_utils.PinholeCameraCfg(
+        #         focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10)
+        #     ),
+        #     offset=CameraCfg.OffsetCfg(pos=(0, 0.0, 0), rot=(1, 0, 0, 0), convention="ros"),
+        # )
         
         # External camera: front
-        self.scene.camera_ext1 = TiledCameraCfg(
-            prim_path="{ENV_REGEX_NS}/exterior1",
-            update_period=0.0,
-            height=480*self.img_resolution_scale,
-            width=640*self.img_resolution_scale,
-            data_types=["rgb", "depth", "semantic_segmentation"],
-            colorize_semantic_segmentation=True,
-            spawn=sim_utils.PinholeCameraCfg(
-                focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10)
-            ),
-            offset=CameraCfg.OffsetCfg(pos=(2.5,0.0,0.0), rot=(0.5,-0.5,-0.5,0.5), convention="ros"),
+        # self.scene.camera_ext1 = TiledCameraCfg(
+        #     prim_path="{ENV_REGEX_NS}/exterior1",
+        #     update_period=0.0,
+        #     height=480*self.img_resolution_scale,
+        #     width=640*self.img_resolution_scale,
+        #     data_types=["rgb", "depth", "semantic_segmentation"],
+        #     colorize_semantic_segmentation=True,
+        #     spawn=sim_utils.PinholeCameraCfg(
+        #         focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10)
+        #     ),
+        #     offset=CameraCfg.OffsetCfg(pos=(2.5,0.0,0.0), rot=(0.5,-0.5,-0.5,0.5), convention="ros"),
             # '''
         # {'semantic_segmentation': {'idToLabels': {'0': {'class': 'BACKGROUND'}, 
         # '1': {'class': 'UNLABELLED'}, '2': {'class': 'robot'}, 
@@ -98,19 +98,19 @@ class FrankaCubeLiftCameraEnvCfg(LiftCameraEnvCfg):
             offset=CameraCfg.OffsetCfg(pos=(0.0,2.5,0.0), rot=(0.0,0.0,0.70711,-0.70711), convention="ros"),
         )
 
-        # External camera: bird-eye
-        self.scene.camera_bird = TiledCameraCfg(
-            prim_path="{ENV_REGEX_NS}/bird",
-            update_period=0.0,
-            height=480*self.img_resolution_scale,
-            width=640*self.img_resolution_scale,
-            data_types=["rgb", "depth", "semantic_segmentation"],
-            colorize_semantic_segmentation=True,
-            spawn=sim_utils.PinholeCameraCfg(
-                focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10)
-            ),
-            offset=CameraCfg.OffsetCfg(pos=(0,0,5.5), rot=(0.0,0.0,1.0,0.0), convention="ros"),
-        )
+        # # External camera: bird-eye
+        # self.scene.camera_bird = TiledCameraCfg(
+        #     prim_path="{ENV_REGEX_NS}/bird",
+        #     update_period=0.0,
+        #     height=480*self.img_resolution_scale,
+        #     width=640*self.img_resolution_scale,
+        #     data_types=["rgb", "depth", "semantic_segmentation"],
+        #     colorize_semantic_segmentation=True,
+        #     spawn=sim_utils.PinholeCameraCfg(
+        #         focal_length=15.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10)
+        #     ),
+        #     offset=CameraCfg.OffsetCfg(pos=(0,0,5.5), rot=(0.0,0.0,1.0,0.0), convention="ros"),
+        # )
 
         # Set Cube as object
         self.scene.object = RigidObjectCfg(
