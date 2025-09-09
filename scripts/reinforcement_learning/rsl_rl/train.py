@@ -113,7 +113,21 @@ torch.backends.cudnn.benchmark = False
 def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: RslRlOnPolicyRunnerCfg):
     """Train with RSL-RL agent."""
     # override configurations with non-hydra CLI arguments
-    agent_cfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)
+    # DO NOT overwrite agent_cfg. Get CLI overrides as a dict…
+    overrides = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)
+
+    # …then apply them onto the original config object.
+    if isinstance(overrides, dict):
+        for k, v in overrides.items():
+            # OmegaConf/Hydra config supports setattr-style updates for declared fields
+            try:
+                setattr(agent_cfg, k, v)
+            except Exception:
+                # Fallback in case a sub-structure is a dict already
+                try:
+                    agent_cfg[k] = v
+                except Exception:
+                    pass  # ignore unknown keys
     env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else env_cfg.scene.num_envs
     agent_cfg.max_iterations = (
         args_cli.max_iterations if args_cli.max_iterations is not None else agent_cfg.max_iterations
