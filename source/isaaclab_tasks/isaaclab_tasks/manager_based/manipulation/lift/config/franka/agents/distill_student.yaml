@@ -27,6 +27,5 @@ save_interval: 50
 experiment_name: franka_lift
 run_name: ""
 logger: tensorboard
-resume: false
 load_run: ".*"
 load_checkpoint: "model_.*.pt"
