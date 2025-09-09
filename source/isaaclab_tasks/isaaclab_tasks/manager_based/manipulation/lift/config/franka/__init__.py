@@ -50,11 +50,11 @@ gym.register(
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": f"{__name__}.joint_pos_camera_env_cfg:FrankaCubeLiftCameraEnvCfg",
-        "rsl_rl_cfg_entry_point": "isaaclab_rl.isaaclab_rl.rsl_rl.rrl_config:RslRlOnPolicyRunnerCfg",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}:distill_student.yaml",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
         "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg.yaml",
         "sb3_cfg_entry_point": f"{agents.__name__}:sb3_ppo_cfg.yaml",
-        "distill_cfg_entry_point": "isaaclab_rl.isaaclab_rl.rsl_rl.distillation_cfg:RsLRLDistillationAlgorithmCfg",
+        "distill_cfg_entry_point": "isaaclab_rl.isaaclab_rl.rsl_rl.distillation_cfg:RslRlDistillationAlgorithmCfg"
     },
     disable_env_checker=True,
 )
