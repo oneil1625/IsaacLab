@@ -87,5 +87,4 @@ def update_rsl_rl_cfg(agent_cfg: RslRlOnPolicyRunnerCfg, args_cli: argparse.Name
     # if agent_cfg.logger in {"wandb", "neptune"} and args_cli.log_project_name:
     #     agent_cfg.wandb_project = args_cli.log_project_name
     #     agent_cfg.neptune_project = args_cli.log_project_name
-    agent_cfg.max_iterations = 2000
     return agent_cfg
