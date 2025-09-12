@@ -1,34 +1,32 @@
 # distill_student.yaml
 # @package _group_
 # This file defines the whole agent (RslRlOnPolicyRunnerCfg)
+seed: 42
+device: cuda:0
+num_steps_per_env: 24
+max_iterations: 3000
+empirical_normalization: false
 
-agent:
-  seed: 42
-  device: cuda:0
-  num_steps_per_env: 24
-  max_iterations: 3000
-  empirical_normalization: false
+policy:
+  class_name: StudentTeacher
+  init_noise_std: 0.5
+  noise_std_type: scalar
+  student_hidden_dims: [256, 256, 256]
+  teacher_hidden_dims: [256, 256, 256]
+  activation: elu
 
-  policy:
-    class_name: StudentTeacher
-    init_noise_std: 0.5
-    noise_std_type: scalar
-    student_hidden_dims: [256, 256, 256]
-    teacher_hidden_dims: [256, 256, 256]
-    activation: elu
+algorithm:
+  class_name: Distillation
+  num_learning_epochs: 5
+  learning_rate: 1e-3
+  gradient_length: 32
+  max_grad_norm: 1.0
 
-  algorithm:
-    class_name: Distillation
-    num_learning_epochs: 5
-    learning_rate: 1e-3
-    gradient_length: 32
-    max_grad_norm: 1.0
-
-  clip_actions: null
-  save_interval: 50
-  experiment_name: franka_lift
-  run_name: ""
-  resume: true
-  load_run: 2025-08-06_14-57-09
-  load_checkpoint: model_2999.pt
-  logger: tensorboard
+clip_actions: null
+save_interval: 50
+experiment_name: franka_lift
+run_name: ""
+resume: true
+load_run: 2025-08-06_14-57-09
+load_checkpoint: model_2999.pt
+logger: tensorboard
