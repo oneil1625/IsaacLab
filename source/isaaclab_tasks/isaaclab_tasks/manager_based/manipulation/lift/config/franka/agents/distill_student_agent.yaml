@@ -1,0 +1,2 @@
+_rsl_rl_cfg_entry_point: isaaclab_rl.rsl_rl.distillation_cfg:RslRLDistillationStudentTeacherCfg
+agent_cfg_entry_point: distill_student.yaml
