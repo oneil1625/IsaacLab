@@ -28,15 +28,6 @@ parser.add_argument("--max_iterations", type=int, default=None, help="RL Policy 
 parser.add_argument(
     "--distributed", action="store_true", default=False, help="Run training with multiple GPUs or nodes."
 )
-parser.add_argument(
-    "--student_group", type=str, default=None,
-    help="Observation group to use for the STUDENT (e.g., camera_ext2)."
-)
-parser.add_argument(
-    "--teacher_group", type=str, default="policy",
-    help="Observation group to expose as TEACHER (default: policy)."
-)
-parser.add_argument("--teacher_ckpt", type=str, default=None, help="Path to PPO checkpoint to load into teacher.")
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -95,7 +86,7 @@ from isaaclab.envs import (
 from isaaclab.utils.dict import print_dict
 from isaaclab.utils.io import dump_pickle, dump_yaml
 
-from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper, RslRlDistillationStudentTeacherCfg
+from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper
 
 import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils import get_checkpoint_path
@@ -110,32 +101,14 @@ torch.backends.cudnn.benchmark = False
 
 
 @hydra_task_config(args_cli.task, "rsl_rl_cfg_entry_point")
-def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: RslRlDistillationStudentTeacherCfg):
+def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: RslRlOnPolicyRunnerCfg):
     """Train with RSL-RL agent."""
     # override configurations with non-hydra CLI arguments
-    # DO NOT overwrite agent_cfg. Get CLI overrides as a dict…
-    overrides = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)
-
-    # …then apply them onto the original config object.
-    if isinstance(overrides, dict):
-        for k, v in overrides.items():
-            # OmegaConf/Hydra config supports setattr-style updates for declared fields
-            try:
-                setattr(agent_cfg, k, v)
-            except Exception:
-                # Fallback in case a sub-structure is a dict already
-                try:
-                    agent_cfg[k] = v
-                except Exception:
-                    pass  # ignore unknown keys
+    agent_cfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)
     env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else env_cfg.scene.num_envs
-    agent_cfg["max_iterations"] = 1500
-    
-    # print(f"[INFO]: Switching to Distillation + StudentTeacher because --teacher_ckpt was provided.")
-    # agent_cfg.algorithm.class_name = "Distillation"
-    # agent_cfg.policy.class_name = "StudentTeacher"
-    # agent_cfg.policy.student_hidden_dims = [256, 256, 256]
-    # agent_cfg.policy.teacher_hidden_dims = [256, 256, 256]
+    agent_cfg.max_iterations = (
+        args_cli.max_iterations if args_cli.max_iterations is not None else agent_cfg.max_iterations
+    )
 
     # set the environment seed
     # note: certain randomizations occur in the environment initialization so we set the seed here
@@ -167,51 +140,6 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
 
-    # Alias TEACHER observations to infos['observations']['teacher'] so RSL-RL distillation can find them.
-    # This is a no-op for PPO.
-    import gymnasium as _gym
-    class _StudentTeacherObsWrapper(_gym.Wrapper):
-        """
-        Returns obs from the chosen student obs-group (e.g., 'camera_ext2').
-        Copies the chosen teacher obs-group into infos['observations']['teacher'].
-        This way RSL-RL Distillation gets student=obs and teacher=infos['observations']['teacher'].
-        """
-        def __init__(self, env, student_group: str, teacher_group: str):
-            super().__init__(env)
-            self._student_group = student_group
-            self._teacher_group = teacher_group
-
-        def _route(self, obs, info):
-            obs_dict = info.get("observations", {})
-            # set teacher
-            if self._teacher_group in obs_dict:
-                obs_dict["teacher"] = obs_dict[self._teacher_group]
-            elif "critic" in obs_dict:
-                obs_dict["teacher"] = obs_dict["critic"]
-            elif obs_dict:
-                # last resort: any available group
-                obs_dict["teacher"] = obs_dict[next(iter(obs_dict))]
-            info["observations"] = obs_dict
-
-            # choose student observation to return
-            if self._student_group in obs_dict:
-                return obs_dict[self._student_group], info
-            # fall back to the original obs if group missing
-            return obs, info
-
-        def reset(self, **kw):
-            obs, info = self.env.reset(**kw)
-            return self._route(obs, info)
-
-        def step(self, act):
-            obs, r, d, t, info = self.env.step(act)
-            obs, info = self._route(obs, info)
-            return obs, r, d, t, info
-            
-    env = _StudentTeacherObsWrapper(env,
-                            student_group=args_cli.student_group or "policy",
-                            teacher_group=args_cli.teacher_group or "policy")
-
     # convert to single-agent instance if required by the RL algorithm
     if isinstance(env.unwrapped, DirectMARLEnv):
         env = multi_agent_to_single_agent(env)
@@ -239,6 +167,11 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
     # write git state to logs
     runner.add_git_repo_to_log(__file__)
+    # load the checkpoint
+    if agent_cfg.resume or agent_cfg.algorithm.class_name == "Distillation":
+        print(f"[INFO]: Loading model checkpoint from: {resume_path}")
+        # load previously trained model
+        runner.load(resume_path)
 
     # dump the configuration into log-directory
     dump_yaml(os.path.join(log_dir, "params", "env.yaml"), env_cfg)
