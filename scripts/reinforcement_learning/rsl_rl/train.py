@@ -131,11 +131,11 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else env_cfg.scene.num_envs
     agent_cfg["max_iterations"] = 1500
     
-    print(f"[INFO]: Switching to Distillation + StudentTeacher because --teacher_ckpt was provided.")
-    agent_cfg.algorithm.class_name = "Distillation"
-    agent_cfg.policy.class_name = "StudentTeacher"
-    agent_cfg.policy.student_hidden_dims = [256, 256, 256]
-    agent_cfg.policy.teacher_hidden_dims = [256, 256, 256]
+    # print(f"[INFO]: Switching to Distillation + StudentTeacher because --teacher_ckpt was provided.")
+    # agent_cfg.algorithm.class_name = "Distillation"
+    # agent_cfg.policy.class_name = "StudentTeacher"
+    # agent_cfg.policy.student_hidden_dims = [256, 256, 256]
+    # agent_cfg.policy.teacher_hidden_dims = [256, 256, 256]
 
     # set the environment seed
     # note: certain randomizations occur in the environment initialization so we set the seed here
