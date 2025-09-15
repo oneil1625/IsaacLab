@@ -100,6 +100,7 @@ def load_cfg_from_registry(task_name: str, entry_point_key: str) -> dict | objec
             cfg_cls = cfg_entry_point()
         elif isinstance(cfg_entry_point, str):
             # resolve path to the module location
+            print("[DEBUG] cfg_entry_point =", cfg_entry_point)
             mod_name, attr_name = cfg_entry_point.split(":")
             mod = importlib.import_module(mod_name)
             cfg_cls = getattr(mod, attr_name)
