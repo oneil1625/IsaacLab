@@ -113,10 +113,6 @@ class ObservationsCfg:
     @configclass
     class ImageCfg(ObsGroup):
         """Observations for image group."""
-        # image = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
-        # image1 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_ext1"), "data_type": "rgb"})
-        # image2 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_ext2"), "data_type": "rgb"})
-        # image3 = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_bird"), "data_type": "rgb"})
         image = ObsTerm(
         func=mdp.image,
         params={
@@ -133,8 +129,8 @@ class ObservationsCfg:
 
 
     # observation groups
-    policy: ImageCfg = ImageCfg()
-    image: PolicyCfg = PolicyCfg()
+    image: ImageCfg = ImageCfg()
+    # image: PolicyCfg = PolicyCfg()
 
 
 @configclass
