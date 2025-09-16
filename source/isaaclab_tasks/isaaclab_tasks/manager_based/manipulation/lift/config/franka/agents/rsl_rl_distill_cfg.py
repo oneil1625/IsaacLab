@@ -20,7 +20,7 @@ class DistillStudentRunnerCfg(RslRlOnPolicyRunnerCfg):
         init_noise_std=1.0,
         noise_std_type="scalar",
         student_hidden_dims=[256, 128, 64],
-        teacher_hidden_dims=[512, 256, 128],
+        teacher_hidden_dims=[256, 128, 64],
         activation="elu"
     )
 
