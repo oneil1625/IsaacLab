@@ -109,7 +109,7 @@ class ObservationsCfg:
             self.enable_corruption = True
             self.concatenate_terms = False
 
-     @configclass
+    @configclass
     class TeacherCfg(ObsGroup):
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
