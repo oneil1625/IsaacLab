@@ -31,5 +31,5 @@ class DistillStudentRunnerCfg(RslRlOnPolicyRunnerCfg):
         max_grad_norm=1.0,
     )
 
-    load_run = "2025-08-06_14-57-09"
-    load_checkpoint = "model_2999.pt"
+    load_run = "2025-08-04_00-07-02"
+    load_checkpoint = "model_1499.pt"
