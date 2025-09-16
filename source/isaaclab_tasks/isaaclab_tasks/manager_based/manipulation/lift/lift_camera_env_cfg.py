@@ -129,7 +129,7 @@ class ObservationsCfg:
 
 
     # observation groups
-    image: ImageCfg = ImageCfg()
+    policy: ImageCfg = ImageCfg()
     # image: PolicyCfg = PolicyCfg()
 
 
