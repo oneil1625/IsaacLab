@@ -77,6 +77,7 @@ def main():
     env.reset()
     # File to write to
     csv_file = "log.csv"
+    counter = 0
 
     # If file doesn’t exist yet, create and write header
     file_exists = os.path.isfile(csv_file)
@@ -142,8 +143,8 @@ def main():
             env.step(actions)
 
             cube_data = asset._data.root_link_pose_w
-            
-            cube_changed = subtract_frame_transforms(cube_data[...,:3],cube_data[...,3:7],robot_pos,robot_ore)
+
+            cube_changed = subtract_frame_transforms(robot_pos,robot_ore,cube_data[...,:3],cube_data[...,3:7]) #cube wrt robot
 
             cube_changed_pos = cube_changed[0]
             cube_changed_ore = cube_changed[1]
@@ -164,19 +165,25 @@ def main():
             # Append row to CSV
             with open(csv_file, mode="a", newline="") as f:
                 writer = csv.writer(f)
+                np.savez_compressed(f"frames/depth_{frame_idx}.npz", 
+                   front_depth=depth.cpu().numpy(),
+                   side_depth=depth1.cpu().numpy(), 
+                   bird_depth=depth2.cpu().numpy())
                 for i in range(env_cfg.scene.num_envs):
                     save_images_to_file(images[i].cpu()/255.0,f"frames/front/rgb_env{i}_{frame_idx}.jpg")
                     save_images_to_file(images1[i].cpu()/255.0,f"frames/side/rgb_env{i}_{frame_idx}.jpg")
                     save_images_to_file(images2[i].cpu()/255.0,f"frames/bird/rgb_env{i}_{frame_idx}.jpg")
-                    save_images_to_file(depth_to_rgba(depth)[i][..., :3],f"frames/front/dp_env{i}_{frame_idx}.jpg")
-                    save_images_to_file(depth_to_rgba(depth1)[i][..., :3],f"frames/side/dp_env{i}_{frame_idx}.jpg")
-                    save_images_to_file(depth_to_rgba(depth2)[i][..., :3],f"frames/bird/dp_env{i}_{frame_idx}.jpg")
+                    # Save depth maps as compressed .npz
                     writer.writerow([frame_idx, i, cube_data[i][:3].cpu().numpy(), cube_data[i][3:7].cpu().numpy(),robot._data.root_state_w[i][:3].cpu().numpy(),robot._data.root_state_w[i][3:7].cpu().numpy(),cube_changed_pos[i].cpu().numpy(),cube_changed_ore[i].cpu().numpy(),
-                                     f"frames/front/rgb_env{i}_{frame_idx}.jpg",f"frames/side/rgb_env{i}_{frame_idx}.jpg",f"frames/bird/rgb_env{i}_{frame_idx}.jpg",f"frames/front/dp_env{i}_{frame_idx}.jpg",f"frames/side/dp_env{i}_{frame_idx}.jpg",f"frames/bird/dp_env{i}_{frame_idx}.jpg"])
+                                     f"frames/front/rgb_env{i}_{frame_idx}.jpg",f"frames/side/rgb_env{i}_{frame_idx}.jpg",f"frames/bird/rgb_env{i}_{frame_idx}.jpg",f"frames/front/depth_{frame_idx}.npz",f"frames/side/depth_{frame_idx}.npz",f"frames/bird/depth_{frame_idx}.npz"])
+
+                    # counter += 1
+                    # print(counter)
             
                                                         
             
-
+            if frame_idx>10000:
+                break
             # Save images from camera at camera_index
             '''
             # note: BasicWriter only supports saving data in numpy format, so we need to convert the data to numpy.
