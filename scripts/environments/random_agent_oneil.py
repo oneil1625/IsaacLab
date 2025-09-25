@@ -76,7 +76,7 @@ def main():
     # reset environment
     env.reset()
     # File to write to
-    csv_file = "log.csv"
+    csv_file = "predict.csv"
     counter = 0
 
     # If file doesn’t exist yet, create and write header
@@ -84,7 +84,7 @@ def main():
     with open(csv_file, mode="a", newline="") as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(["frame", "env_id", "cube_pos", "cube_ore","robot_pos","robot_ore","cube_changed_pos","cube_changed_ore","front_img_rgb","side_img_rgb","bird_img_rgb","front_img_dp","side_img_dp","bird_img_dp"])  # header row
+            writer.writerow(["frame", "env_id", "cube_pos", "cube_ore","robot_pos","robot_ore","cube_changed_pos","cube_changed_ore","front_img_rgb","side_img_rgb","bird_img_rgb","front_img_dp","side_img_dp","bird_img_dp","env_origin"])  # header row
     while simulation_app.is_running():
         # run everything in inference mode
         with torch.inference_mode():
@@ -103,7 +103,22 @@ def main():
             frame_idx+=1
             actions = torch.zeros(env.action_space.shape, device=env.unwrapped.device)
             # apply actions
-            
+            # env.step(actions)
+
+            # test_position = torch.tensor([[0.75, 0.8, 0.5]], device=asset.device).repeat(env_cfg.scene.num_envs, 1)
+            # test_orientation = torch.tensor([[1.0, 0.0, 0.0, 0.0]], device=asset.device).repeat(env_cfg.scene.num_envs, 1)
+            # asset.write_root_pose_to_sim(torch.cat([test_position, test_orientation], dim=-1))
+            # env.step(actions)
+            # env.unwrapped.sim.render()
+            # sensor.reset()
+            # sensor.update(dt=0, force_recompute=True) 
+            # images = sensor.data.output["rgb"]
+            # images1 = sensor1.data.output["rgb"]
+            # images2 = sensor2.data.output["rgb"]
+
+            # save_images_to_file(images.cpu()/255.0,f"frames/front/rgb_env_{frame_idx}.jpg")
+            # save_images_to_file(images1.cpu()/255.0,f"frames/side/rgb_env_{frame_idx}.jpg")
+            # save_images_to_file(images2.cpu()/255.0,f"frames/bird/rgb_env_{frame_idx}.jpg")
             limits = robot._data.joint_pos_limits
             # Suppose `limits` is your tensor of shape (num_envs, num_joints, 2)
             low = limits[..., 0]
@@ -119,7 +134,7 @@ def main():
             
 
             obs,_,_,_,_ = env.step(actions)
-            pose_range = {"x": (-1.0, 1.0), "y": (-1.0, 1.0), "z": (-0.1,1.0)}
+            pose_range = {"x": (-0.75, 0.25), "y": (-0.8, 0.8), "z": (-0.025,0.5)}
             root_states = asset.data.default_root_state.clone()
 
             range_list = [pose_range.get(key, (0.0, 0.0)) for key in ["x", "y", "z"]]
@@ -162,20 +177,19 @@ def main():
             depth = sensor.data.output["depth"]
             depth1 = sensor1.data.output["depth"]
             depth2 = sensor2.data.output["depth"]
+            np.savez_compressed(f"frames/front/depth_{frame_idx}.npz", depth=depth.cpu().numpy())
+            np.savez_compressed(f"frames/side/depth_{frame_idx}.npz", depth=depth1.cpu().numpy())
+            np.savez_compressed(f"frames/bird/depth_{frame_idx}.npz", depth=depth2.cpu().numpy())
             # Append row to CSV
             with open(csv_file, mode="a", newline="") as f:
                 writer = csv.writer(f)
-                np.savez_compressed(f"frames/depth_{frame_idx}.npz", 
-                   front_depth=depth.cpu().numpy(),
-                   side_depth=depth1.cpu().numpy(), 
-                   bird_depth=depth2.cpu().numpy())
                 for i in range(env_cfg.scene.num_envs):
                     save_images_to_file(images[i].cpu()/255.0,f"frames/front/rgb_env{i}_{frame_idx}.jpg")
                     save_images_to_file(images1[i].cpu()/255.0,f"frames/side/rgb_env{i}_{frame_idx}.jpg")
                     save_images_to_file(images2[i].cpu()/255.0,f"frames/bird/rgb_env{i}_{frame_idx}.jpg")
                     # Save depth maps as compressed .npz
                     writer.writerow([frame_idx, i, cube_data[i][:3].cpu().numpy(), cube_data[i][3:7].cpu().numpy(),robot._data.root_state_w[i][:3].cpu().numpy(),robot._data.root_state_w[i][3:7].cpu().numpy(),cube_changed_pos[i].cpu().numpy(),cube_changed_ore[i].cpu().numpy(),
-                                     f"frames/front/rgb_env{i}_{frame_idx}.jpg",f"frames/side/rgb_env{i}_{frame_idx}.jpg",f"frames/bird/rgb_env{i}_{frame_idx}.jpg",f"frames/front/depth_{frame_idx}.npz",f"frames/side/depth_{frame_idx}.npz",f"frames/bird/depth_{frame_idx}.npz"])
+                                     f"frames/front/rgb_env{i}_{frame_idx}.jpg",f"frames/side/rgb_env{i}_{frame_idx}.jpg",f"frames/bird/rgb_env{i}_{frame_idx}.jpg",f"frames/front/depth_{frame_idx}.npz",f"frames/side/depth_{frame_idx}.npz",f"frames/bird/depth_{frame_idx}.npz",env.unwrapped.scene.env_origins[i].cpu().numpy()])
 
                     # counter += 1
                     # print(counter)
