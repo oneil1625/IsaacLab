@@ -26,5 +26,5 @@ clip_actions: null
 save_interval: 50
 experiment_name: franka_lift
 run_name: ""
-load_run: 2025-08-06_14-57-09
+load_run: ExpertTeacher3000
 load_checkpoint: model_2999.pt
