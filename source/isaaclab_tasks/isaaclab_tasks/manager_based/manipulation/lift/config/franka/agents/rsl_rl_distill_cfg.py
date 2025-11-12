@@ -11,17 +11,17 @@ from isaaclab_rl.rsl_rl import (
 @configclass
 class DistillStudentRunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 1500
+    max_iterations = 3000
     save_interval = 50
     experiment_name = "franka_lift"
-    empirical_normalization = False
+    empirical_normalization = True
 
     policy = RslRlDistillationStudentTeacherCfg(
-        init_noise_std=1.0,
-        noise_std_type="scalar",
-        student_hidden_dims=[128, 64],
+        init_noise_std=0.1,
+        noise_std_type="adaptive",
+        student_hidden_dims=[1024, 512, 256], # 512, 256, 128 for resnet18
         teacher_hidden_dims=[256, 128, 64],
-        activation="elu"
+        activation="elu",
     )
 
     algorithm = RslRlDistillationAlgorithmCfg(
@@ -31,5 +31,5 @@ class DistillStudentRunnerCfg(RslRlOnPolicyRunnerCfg):
         max_grad_norm=1.0,
     )
 
-    load_run = "2025-08-04_00-07-02"
-    load_checkpoint = "model_1499.pt"
+    load_run = "ExpertTeacher3000"
+    load_checkpoint = "model_2999.pt"

@@ -45,8 +45,8 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
     # Table
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.25, 0, -0.5], rot=[0.707, 0, 0, 0.707]),
+        spawn=UsdFileCfg(usd_path=f"usd_assets/FYP_shop_table_2.usd", scale=(0.01, 0.01, 0.01))
     )
 
     # plane
@@ -82,7 +82,7 @@ class CommandsCfg:
         resampling_time_range=(5.0, 5.0),
         debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(0.4, 0.6), pos_y=(-0.25, 0.25), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+            pos_x=(0.6, 0.6), pos_y=(0.00, 0.00), pos_z=(0.4, 0.4), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
     )
 
@@ -104,47 +104,41 @@ class ObservationsCfg:
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
 
-        joint_pos = ObsTerm(func=mdp.joint_pos_rel)
-        joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
-        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
-        actions = ObsTerm(func=mdp.last_action)
+        image_ext2 = ObsTerm(
+        func=mdp.image_features,
+        params={
+            "sensor_cfg": SceneEntityCfg("camera_ext2"),
+            "data_type": "rgb",
+            "model_name": "resnet18",
+            "model_device": "cuda:0",
+        },
+        )
+        image_ext1 = ObsTerm(
+        func=mdp.image_features,
+        params={
+            "sensor_cfg": SceneEntityCfg("camera_ext1"),
+            "data_type": "rgb",
+            "model_name": "resnet18",
+            "model_device": "cuda:0",
+        },
+        )
+        image_bird = ObsTerm(
+        func=mdp.image_features,
+        params={
+            "sensor_cfg": SceneEntityCfg("camera_bird"),
+            "data_type": "rgb",
+            "model_name": "resnet18",
+            "model_device": "cuda:0",
+        },
+        )
 
         def __post_init__(self):
             self.enable_corruption = True
             self.concatenate_terms = True
 
-     # ---------- Teacher (privileged) ----------
-    @configclass
-    class Teacher(ObsGroup):
-        joint_pos = ObsTerm(func=mdp.joint_pos_rel)
-        joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
-        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
-        actions = ObsTerm(func=mdp.last_action)
-
-        def __post_init__(self):
-            self.enable_corruption = True
-            self.concatenate_terms = True   # produces a flat vector (D,)
-
-    # ---------- Student (camera only) ----------
-    @configclass
-    class StudentCam(ObsGroup):
-        image = ObsTerm(
-        func=mdp.image,
-        params={
-            "sensor_cfg": SceneEntityCfg("camera_ext2"),
-            "data_type": "rgb",
-            "normalize": True,
-        },
-    )
-        def __post_init__(self):
-            self.enable_corruption = True
-            self.concatenate_terms = True  
 
     # observation groups
     policy: PolicyCfg = PolicyCfg()
-    camera_ext2: StudentCam = StudentCam()
 
 
 @configclass

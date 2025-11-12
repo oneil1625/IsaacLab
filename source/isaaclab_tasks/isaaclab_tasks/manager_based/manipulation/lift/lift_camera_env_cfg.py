@@ -43,8 +43,8 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
     # Table
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.25, 0, -0.5], rot=[0.707, 0, 0, 0.707]),
+        spawn=UsdFileCfg(usd_path=f"usd_assets/FYP_shop_table_2.usd", scale=(0.01, 0.01, 0.01),
                          semantic_tags=[("class", "table")]),
     )
 
@@ -76,7 +76,7 @@ class CommandsCfg:
         resampling_time_range=(5.0, 5.0),
         debug_vis=False,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(0.4, 0.6), pos_y=(-0.25, 0.25), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+            pos_x=(0.6, 0.6), pos_y=(0.00, 0.00), pos_z=(0.4, 0.4), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
     )
 
@@ -89,25 +89,88 @@ class ActionsCfg:
     arm_action: mdp.JointPositionActionCfg | mdp.DifferentialInverseKinematicsActionCfg = MISSING
     gripper_action: mdp.BinaryJointPositionActionCfg = MISSING
 
-
-
 @configclass
 class ObservationsCfg:
     """Observation specifications for the MDP."""
-    
+
     @configclass
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
-       
+
+        # observation terms (order preserved)
+        joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel)
+        joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel)
+
+        def __post_init__(self) -> None:
+            self.enable_corruption = False
+            self.concatenate_terms = True
+
+    # observation groups
+    policy: PolicyCfg = PolicyCfg()
+
+
+@configclass
+class ResNet18ObservationsCfg:
+    """Observation specifications for the MDP."""
+
+    @configclass
+    class TeacherCfg(ObsGroup):
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
         object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
         target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
         actions = ObsTerm(func=mdp.last_action)
+        
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = True  
+    
+    @configclass
+    class ResNet18FeaturesCameraPolicyCfg(ObsGroup):
+        """Observations for image group."""
+        image_ext2 = ObsTerm(
+        func=mdp.image_features,
+        params={
+            "sensor_cfg": SceneEntityCfg("camera_ext2"),
+            "data_type": "rgb",
+            "model_name": "resnet18",
+            "model_device": "cuda:0",
+        },
+        )
+        image_ext1 = ObsTerm(
+        func=mdp.image_features,
+        params={
+            "sensor_cfg": SceneEntityCfg("camera_ext1"),
+            "data_type": "rgb",
+            "model_name": "resnet18",
+            "model_device": "cuda:0",
+        },
+        )
+        image_bird = ObsTerm(
+        func=mdp.image_features,
+        params={
+            "sensor_cfg": SceneEntityCfg("camera_bird"),
+            "data_type": "rgb",
+            "model_name": "resnet18",
+            "model_device": "cuda:0",
+        },
+        )
+        joint_pos = ObsTerm(func=mdp.joint_pos_rel)
+        joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
+        actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self):
             self.enable_corruption = True
-            self.concatenate_terms = False
+            self.concatenate_terms = True
+    
+    # observation groups
+    policy: ObsGroup = ResNet18FeaturesCameraPolicyCfg()
+    teacher: TeacherCfg = TeacherCfg()
+
+@configclass
+class RGBObservationsCfg:
+    """Observation specifications for the MDP."""
 
     @configclass
     class TeacherCfg(ObsGroup):
@@ -120,30 +183,115 @@ class ObservationsCfg:
         def __post_init__(self):
             self.enable_corruption = True
             self.concatenate_terms = True  
-    
+
     @configclass
-    class ImageCfg(ObsGroup):
-        """Observations for image group."""
-        image = ObsTerm(
-        func=mdp.image,
-        params={
-            "sensor_cfg": SceneEntityCfg("camera_ext2"),
-            "data_type": "rgb",
-            "normalize": True,
-        },
-        )
-        
+    class RGBCameraPolicyCfg(ObsGroup):
+        """Observations for policy group with RGB images."""
+
+        image = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_ext1"), "data_type": "rgb"})
+
+        def __post_init__(self):
+            self.enable_corruption = False
+            self.concatenate_terms = True
+
+    policy: ObsGroup = RGBCameraPolicyCfg()
+    teacher: TeacherCfg = TeacherCfg()
+
+
+@configclass
+class DepthObservationsCfg:
+    """Observation specifications for the MDP."""
+
+    @configclass
+    class TeacherCfg(ObsGroup):
+        joint_pos = ObsTerm(func=mdp.joint_pos_rel)
+        joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+        object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
+        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
+        actions = ObsTerm(func=mdp.last_action)
+
         def __post_init__(self):
             self.enable_corruption = True
-            self.concatenate_terms = True
-    
+            self.concatenate_terms = True  
 
+    @configclass
+    class DepthCameraPolicyCfg(ObsGroup):
+        """Observations for policy group with depth images."""
 
-    # observation groups
-    policy: ImageCfg = ImageCfg()
+        # image1_front = ObsTerm(
+        #     func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_ext1"), "data_type": "distance_to_camera"}
+        # )
+        image_side = ObsTerm(
+            func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_ext2"), "data_type": "distance_to_camera"}
+        )
+        # image_bird = ObsTerm(
+        #     func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera_bird"), "data_type": "distance_to_camera"}
+        # )
+
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = True  
+
+    policy: ObsGroup = DepthCameraPolicyCfg()
     teacher: TeacherCfg = TeacherCfg()
-    # image: PolicyCfg = PolicyCfg()
 
+
+
+@configclass
+class TheiaTinyObservationCfg:
+    """Observation specifications for the MDP."""
+
+    @configclass
+    class TeacherCfg(ObsGroup):
+        joint_pos = ObsTerm(func=mdp.joint_pos_rel)
+        joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+        object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
+        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
+        actions = ObsTerm(func=mdp.last_action)
+
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = True  
+
+    @configclass
+    class TheiaTinyFeaturesCameraPolicyCfg(ObsGroup):
+        """Observations for policy group with features extracted from RGB images with a frozen Theia-Tiny Transformer"""
+
+        image_ext1 = ObsTerm(
+            func=mdp.image_features,
+            params={
+                "sensor_cfg": SceneEntityCfg("camera_ext1"),
+                "data_type": "rgb",
+                "model_name": "theia-tiny-patch16-224-cddsv",
+                "model_device": "cuda:0",
+            },
+        )
+        image_ext2 = ObsTerm(
+            func=mdp.image_features,
+            params={
+                "sensor_cfg": SceneEntityCfg("camera_ext2"),
+                "data_type": "rgb",
+                "model_name": "theia-tiny-patch16-224-cddsv",
+                "model_device": "cuda:0",
+            },
+        )
+        image_bird = ObsTerm(
+            func=mdp.image_features,
+            params={
+                "sensor_cfg": SceneEntityCfg("camera_bird"),
+                "data_type": "rgb",
+                "model_name": "theia-tiny-patch16-224-cddsv",
+                "model_device": "cuda:0",
+            },
+        )
+
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = True  
+
+
+    policy: ObsGroup = TheiaTinyFeaturesCameraPolicyCfg()
+    teacher: TeacherCfg = TeacherCfg()
 
 @configclass
 class EventCfg:
@@ -224,11 +372,10 @@ class CurriculumCfg:
 @configclass
 class LiftCameraEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the lifting environment."""
-
     # Scene settings
     scene: ObjectTableSceneCfg = ObjectTableSceneCfg(num_envs=4, env_spacing=5)
     # Basic settings
-    observations: ObservationsCfg = ObservationsCfg()
+    observations: ResNet18ObservationsCfg = ResNet18ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
     commands: CommandsCfg = CommandsCfg()
     # MDP settings
